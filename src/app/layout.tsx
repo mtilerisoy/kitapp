@@ -1,6 +1,5 @@
 'use client'; // Add this line to make it a Client Component
 
-import type { Metadata } from "next"; // Keep this for metadata, but it's handled by Next.js separately
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import React, { useState } from "react";
