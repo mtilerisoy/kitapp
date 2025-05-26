@@ -20,8 +20,8 @@ export default function App() {
     useEffect(() => {
         // Only redirect if session is loaded (sessionLoading is false) AND a session exists
         if (!sessionLoading && session) {
-            logger.info(`User already logged in. User: ${user?.email} Redirecting to /chat`);
-            router.push('/chat');
+            logger.info(`User already logged in. User: ${user?.email} Redirecting to /my-books`);
+            router.push('/my-books');
         }
     }, [session, sessionLoading, router, user]);
 
