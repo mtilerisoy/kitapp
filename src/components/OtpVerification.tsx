@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/utils/logger'
+import { useRouter } from 'next/navigation'
 
 interface OtpVerificationProps {
   email: string
@@ -12,7 +13,8 @@ export default function OtpVerification({ email, onBack, supabase }: OtpVerifica
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+  const router = useRouter()
+  
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -30,7 +32,7 @@ export default function OtpVerification({ email, onBack, supabase }: OtpVerifica
     if (error) {
       setError(error.message)
     } else {
-      // router.push('/my-books')
+      router.push('/my-books')
     }
     setLoading(false)
   }
