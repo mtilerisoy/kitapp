@@ -6,6 +6,7 @@ import "./globals.css";
 import React, { useState } from "react";
 import Header from "./components/layout/Header";
 import Sidebar from "./components/layout/Sidebar";
+import { SessionProvider} from '@/context/SessionContext';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <SessionProvider>
       <head>
         {/* Metadata is typically handled by Next.js `metadata` export or <Head> component in `pages` dir.
             For App Router, the `metadata` export is preferred.
@@ -64,6 +66,7 @@ export default function RootLayout({
           )}
         </div>
       </body>
+      </SessionProvider>
     </html>
   );
 }

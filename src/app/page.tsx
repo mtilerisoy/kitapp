@@ -14,7 +14,7 @@ export default function LandingPage() {
         </p>
         <div className="space-x-4">
           <Link
-            href="/signup" // Replace with your actual signup route
+            href="/login" // Replace with your actual signup route
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105"
           >
             Get Started
