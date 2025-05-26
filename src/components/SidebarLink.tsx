@@ -10,7 +10,7 @@ interface SidebarLinkProps {
   className?: string;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ href = '#', onClick, children, className = "" }) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({ href = '', onClick, children, className = "" }) => {
   return (
     <Link
       href={href}

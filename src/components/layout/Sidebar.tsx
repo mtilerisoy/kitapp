@@ -35,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const handleDashboardClick = async () => {
     await apiClient.get('/api/dashboard'); // Assuming this is an API call to fetch dashboard data
-    // router.push('/api/dashboard');
+    router.push('/my-books');
     onClose();
   };
 
@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
         
         <nav className="flex-grow p-4 space-y-2">
-          <SidebarLink onClick={handleDashboardClick}>
+          <SidebarLink href="/my-books" onClick={handleDashboardClick}>
             {/* HomeIcon */} Dashboard
           </SidebarLink>
           <SidebarLink href="/my-books" onClick={onClose}>
