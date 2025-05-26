@@ -4,13 +4,13 @@ import Link from 'next/link';
 import React from 'react';
 
 interface SidebarLinkProps {
-  href: string;
+  href?: string;
   onClick?: () => void;
   children: React.ReactNode;
   className?: string;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ href, onClick, children, className = "" }) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({ href = '#', onClick, children, className = "" }) => {
   return (
     <Link
       href={href}

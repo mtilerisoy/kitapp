@@ -1,6 +1,29 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect } from 'react';
+import apiClient from '../api';
+
+async function init_api() {
+  try {
+    const res = await apiClient.get('/api');
+    return res.data; 
+  } catch (error) {
+    console.error("Error fetching interview history:", error);
+    return []; 
+  }
+}
 
 export default function LandingPage() {
+
+  useEffect(() => {
+    init_api().then(data => {
+      console.log("API initialized with data:", data);
+    }).catch(error => {
+      console.error("Error initializing API:", error);
+    });
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <section className="py-12 md:py-20">
@@ -72,7 +95,7 @@ export default function LandingPage() {
           Ready to Start Your Next Chapter?
         </h2>
         <Link
-          href="/signup" // Replace with your actual signup route
+          href="/api/auth_check" // Replace with your actual signup route
           className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105 text-lg"
         >
           Sign Up for Free

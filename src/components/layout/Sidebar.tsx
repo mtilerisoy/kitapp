@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import SidebarLink from '../SidebarLink';
 import { useSessionContext } from '@/context/SessionContext';
+import apiClient from '@/api';
 // You can import icons from a library like heroicons or lucide-react
 // import { XIcon, HomeIcon, BookOpenIcon, SearchIcon, CogIcon, LogoutIcon } from '@heroicons/react/outline';
 
@@ -32,6 +33,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleDashboardClick = async () => {
+    await apiClient.get('/api/dashboard'); // Assuming this is an API call to fetch dashboard data
+    // router.push('/api/dashboard');
+    onClose();
+  };
+
   return (
     <aside
       className={`fixed inset-y-0 right-0 z-40 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out 
@@ -54,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
         
         <nav className="flex-grow p-4 space-y-2">
-          <SidebarLink href="/dashboard" onClick={onClose}>
+          <SidebarLink onClick={handleDashboardClick}>
             {/* HomeIcon */} Dashboard
           </SidebarLink>
           <SidebarLink href="/my-books" onClick={onClose}>

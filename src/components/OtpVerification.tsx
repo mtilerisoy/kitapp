@@ -32,7 +32,7 @@ export default function OtpVerification({ email, onBack, supabase }: OtpVerifica
     if (error) {
       setError(error.message)
     } else {
-      router.push('/my-books')
+      // router.push('/my-books')
     }
     setLoading(false)
   }
