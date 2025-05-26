@@ -40,7 +40,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">Track Your Reading</h3>
               <p className="text-gray-600">
-                Easily log the books you're reading, have read, or want to read. Monitor your progress and set reading goals.
+                Easily log the books you&aposre reading, have read, or want to read. Monitor your progress and set reading goals.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-lg text-left">
