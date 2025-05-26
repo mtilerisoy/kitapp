@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
 import { logger } from '@/utils/logger'
 
 interface OtpVerificationProps {
@@ -13,7 +12,6 @@ export default function OtpVerification({ email, onBack, supabase }: OtpVerifica
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter();
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault()

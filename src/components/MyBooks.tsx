@@ -41,14 +41,18 @@ const MyBooks: React.FC = () => {
         // Handle other successful statuses if necessary
         setMessage(`Book saved, but received status: ${response.status}`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving book:', error);
-      if (error.response) {
-        setMessage(`Error: ${error.response.data.message || 'Could not save the book.'}`);
-      } else if (error.request) {
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        const err = error as { response: { data: { message?: string } }; request?: unknown; message?: string };
+        setMessage(`Error: ${err.response.data.message || 'Could not save the book.'}`);
+      } else if (typeof error === 'object' && error !== null && 'request' in error) {
         setMessage('Error: No response from the server. Please try again.');
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        const err = error as { message?: string };
+        setMessage(`Error: ${err.message || 'An unexpected error occurred.'}`);
       } else {
-        setMessage(`Error: ${error.message || 'An unexpected error occurred.'}`);
+        setMessage('An unexpected error occurred.');
       }
     } finally {
       setIsSaving(false);
