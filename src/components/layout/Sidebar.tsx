@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import SidebarLink from '../SidebarLink';
+import { useSessionContext } from '@/context/SessionContext';
 // You can import icons from a library like heroicons or lucide-react
 // import { XIcon, HomeIcon, BookOpenIcon, SearchIcon, CogIcon, LogoutIcon } from '@heroicons/react/outline';
 
@@ -12,6 +14,24 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { session, signOut } = useSessionContext();
+  const router = useRouter();
+
+  const handleAuthAction = () => {
+    if (session) {
+      signOut().then(
+        () => {
+          router.push('/');
+        }
+      ).catch((error) => {
+        console.error('Error signing out:', error);
+        }
+      );
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <aside
       className={`fixed inset-y-0 right-0 z-40 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out 
@@ -47,20 +67,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             {/* CogIcon */} Settings
           </SidebarLink>
         </nav>
-
+        {/* {Display the logged in email} */}
+        <div>
+          {session && (
+            <div className="p-4 text-sm text-gray-600">
+              Logged in as: <span className="font-semibold">{session?.user.email}</span>
+            </div>
+          )}
+        </div>
         <div className="p-4 border-t border-gray-200">
           <button
             onClick={() => {
-              console.log('Logout action'); // Replace with actual logout logic
+              // console.log('Logout action'); // No longer needed with handleAuthAction
+              handleAuthAction();
               onClose();
             }}
-            className="w-full flex items-center justify-start py-2.5 px-4 rounded-md text-gray-700 hover:bg-red-100 hover:text-red-600 transition-colors"
+            className={`w-full flex items-center justify-start py-2.5 px-4 rounded-md text-gray-700 transition-colors ${
+              session 
+                ? 'hover:bg-red-100 hover:text-red-600' 
+                : 'hover:bg-green-100 hover:text-green-700'
+            }`}
           >
             {/* LogoutIcon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            Logout
+            {session ? 'Log Out' : 'Log In'}
           </button>
         </div>
       </div>
