@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import OtpVerification from '../../../components/OtpVerification'
+import OtpVerification from '../../../../components/OtpVerification'
 
 // Create a supabase client
 const supaURL : string = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
