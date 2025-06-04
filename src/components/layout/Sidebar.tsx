@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const handleDiscoverClick = async () => {
     const res = await apiClient.get('/api/categories'); // Assuming this is an API call to fetch dashboard data
     console.log('Settings response:', res);
-    router.push('/categories');
+    router.push('/discover');
     onClose();
   };
 
