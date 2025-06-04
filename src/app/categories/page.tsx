@@ -27,8 +27,12 @@ const CategoriesPage: React.FC = () => {
         const response = await apiClient.get('/api/categories');
 
         setCategories(response.data);
-      } catch (err: any) {
-        setError(err.message || 'An unexpected error occurred.');
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('An unexpected error occurred.');
+        }
         console.error("Error fetching categories:", err);
       } finally {
         setIsLoading(false);
@@ -102,23 +106,23 @@ const styles = {
     margin: '0 auto',
   } as React.CSSProperties,
   header: {
-    textAlign: 'center' as 'center',
+    textAlign: 'center',
     color: '#333',
     marginBottom: '30px',
   } as React.CSSProperties,
   loadingText: {
-    textAlign: 'center' as 'center',
+    textAlign: 'center',
     fontSize: '1.2em',
     color: '#555',
   } as React.CSSProperties,
   errorText: {
-    textAlign: 'center' as 'center',
+    textAlign: 'center',
     fontSize: '1.2em',
     color: 'red',
     marginBottom: '15px',
   } as React.CSSProperties,
   infoText: {
-    textAlign: 'center' as 'center',
+    textAlign: 'center',
     fontSize: '1em',
     color: '#777',
   } as React.CSSProperties,
