@@ -42,7 +42,7 @@ export default function LandingPage() {
             Get Started
           </Link>
           <Link
-            href="/discover"
+            href="/categories"
             className="bg-white hover:bg-gray-100 text-green-600 font-semibold py-3 px-8 rounded-lg border border-green-600 shadow-sm transition-transform transform hover:scale-105"
           >
             Discover Books

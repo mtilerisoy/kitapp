@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation';
 import SidebarLink from '../SidebarLink';
 import { useSessionContext } from '@/context/SessionContext';
 import apiClient from '@/api';
-// You can import icons from a library like heroicons or lucide-react
-// import { XIcon, HomeIcon, BookOpenIcon, SearchIcon, CogIcon, LogoutIcon } from '@heroicons/react/outline';
-
 
 interface SidebarProps {
   isOpen: boolean;
@@ -39,6 +36,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const handleSettingsClick = async () => {
+    const res = await apiClient.get('/api/me'); // Assuming this is an API call to fetch dashboard data
+    // logger.error('Settings response:', {res});
+    console.log('Settings response:', res);
+    // router.push('/api/me');
+    onClose();
+  };
+
+  const handleDiscoverClick = async () => {
+    const res = await apiClient.get('/api/categories'); // Assuming this is an API call to fetch dashboard data
+    console.log('Settings response:', res);
+    router.push('/categories');
+    onClose();
+  };
+
   return (
     <aside
       className={`fixed inset-y-0 right-0 z-40 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out 
@@ -67,10 +79,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <SidebarLink href="/my-books" onClick={onClose}>
             {/* BookOpenIcon */} My Books
           </SidebarLink>
-          <SidebarLink href="/discover" onClick={onClose}>
+          <SidebarLink onClick={handleDiscoverClick}>
             {/* SearchIcon */} Discover Books
           </SidebarLink>
-          <SidebarLink href="/settings" onClick={onClose}>
+          <SidebarLink onClick={handleSettingsClick}>
             {/* CogIcon */} Settings
           </SidebarLink>
         </nav>
