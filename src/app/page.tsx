@@ -6,7 +6,7 @@ import apiClient from '../api';
 
 async function init_api() {
   try {
-    const res = await apiClient.get('/api');
+    const res = await apiClient.get('/api/health');
     return res.data; 
   } catch (error) {
     console.error("Error fetching interview history:", error);

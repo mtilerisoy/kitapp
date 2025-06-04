@@ -1,19 +1,22 @@
 from flask import request, jsonify, g
 from api.services import book_service
 from api.utils.logger_config import logger
+from api.utils.authentication import login_required
 
 def register_home_routes(app):
     logger.debug("Registering home routes")
 
-    @app.route('/api')
+    @app.route('/api/health', methods=['GET'])
     def index():
-        logger.debug("API index route accessed")
-        return "<p>Welcome to the API!</p>"
+        logger.debug("api/health route accessed")
+        return jsonify({"message": "API is running"}), 200
     
-    @app.route('/api/dashboard', methods=['GET'])
-    def dashboard():
+    
+    @app.route('/api/me', methods=['GET'])
+    @login_required
+    def me():
         # Log user authetnication tokens
-        logger.debug("Auth check route accessed")
+        logger.debug("api/me route accessed")
 
         user_id = g.get("user_id", None)
         user_jwt = g.get("user_jwt", None)
@@ -22,6 +25,15 @@ def register_home_routes(app):
         logger.debug(f"User ID: {user_id}")
         logger.debug(f"User JWT: {user_jwt}")
         logger.debug(f"Refresh Token: {refresh_token}")
+
+        if not user_id:
+            logger.warning("User ID not found in request context")
+            return jsonify({"error": "User not authenticated"}), 401
+        return jsonify({
+            "user_id": user_id,
+            "user_jwt": user_jwt,
+            "refresh_token": refresh_token
+        }), 200
     
     @app.route('/api/books', methods=['POST'])
     def create_book():
