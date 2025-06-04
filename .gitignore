@@ -1,6 +1,9 @@
 # Local files
 .local/
 
+# Python Files
+__pycache__/
+
 # dependencies
 /node_modules
 /.pnp
