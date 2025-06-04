@@ -1,5 +1,5 @@
 from flask import request, jsonify, g
-from api.services import book_service
+from api.services import book_service, categories_service
 from api.utils.logger_config import logger
 from api.utils.authentication import login_required
 
@@ -34,6 +34,17 @@ def register_home_routes(app):
             "user_jwt": user_jwt,
             "refresh_token": refresh_token
         }), 200
+    
+    @app.route('/api/categories', methods=['GET'])
+    def get_categories():
+        logger.debug("Get categories route accessed")
+
+        try:
+            categories = categories_service.get_categories()
+            return jsonify(categories), 200
+        except Exception as e:
+            logger.error(f"Error fetching categories: {str(e)}")
+            return jsonify({"error": "Internal server error fetching categories"}), 500
     
     @app.route('/api/books', methods=['POST'])
     def create_book():
