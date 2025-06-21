@@ -1,1 +1,1 @@
-curl -s https://kitapp2.vercel.app/discover > /dev/null 2>&1
+curl -s https://kitapp2.vercel.app/discover
