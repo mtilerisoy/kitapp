@@ -22,5 +22,11 @@
       "src": "/api/(.*)",
       "dest": "api/index.py"
     }
+  ],
+  "crons": [
+    {
+      "path": "/cron/daily_ping.sh",
+      "schedule": "5 18 * * *"
+    }
   ]
 }
