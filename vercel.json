@@ -26,7 +26,7 @@
   "crons": [
     {
       "path": "/cron/daily_ping.sh",
-      "schedule": "5 18 * * *"
+      "schedule": "15 18 * * *"
     }
   ]
 }
