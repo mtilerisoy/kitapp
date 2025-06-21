@@ -17,7 +17,7 @@ class Categories(BaseRepository):
         try:
             query = self.client.table(self.table_name)\
                 .select("*")\
-                .order("created_at", desc=True)
+                .order("name", desc=False)
 
             data, count = query.execute()
 
