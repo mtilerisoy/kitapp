@@ -46,6 +46,27 @@ def register_home_routes(app):
             logger.error(f"Error fetching categories: {str(e)}")
             return jsonify({"error": "Internal server error fetching categories"}), 500
     
+    @app.route('/api/books', methods=['GET'])
+    @login_required # Protect this route so only logged-in users can see books
+    def get_books():
+        logger.debug("Get books route accessed")
+        try:
+            # Get pagination parameters from the query string with defaults
+            page = request.args.get('page', 1, type=int)
+            limit = request.args.get('limit', 20, type=int)
+
+            books = book_service.get_discover_books(page=page, limit=limit)
+
+            if books is not None:
+                return jsonify(books), 200
+            else:
+                # Differentiate between "no books found" (an empty list) and an actual error
+                return jsonify([]), 200
+
+        except Exception as e:
+            logger.error(f"Error fetching books: {str(e)}")
+            return jsonify({"error": "Internal server error fetching books"}), 500
+    
     @app.route('/api/books', methods=['POST'])
     def create_book():
         logger.debug("Create book route accessed")
