@@ -26,9 +26,9 @@ class BooksRepository(BaseRepository):
             # Page 1 should have an offset of 0.
             offset = (page - 1) * limit
 
-            # UPDATE: Added 'author' to the select query.
+            # SYNTH-STACK UPDATE: Added 'description' and 'total_pages' to the select query.
             query = self.client.table(self.table_name)\
-                .select("id, title, author, cover_image_url")\
+                .select("id, title, author, cover_image_url, description, total_pages")\
                 .order("created_at", desc=True)\
                 .range(offset, offset + limit - 1)
 
