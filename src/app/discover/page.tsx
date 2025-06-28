@@ -1,10 +1,14 @@
 // src/pages/categories.tsx
 // Or if not using a framework with file-system routing: src/components/CategoriesPage.tsx
 'use client';
-import React, { useState, useEffect } from 'react';
-import apiClient from '@/api';
 
-// 1. TypeScript interface for a Category object
+import React from 'react';
+import apiClient from '@/api';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import LoadingIndicator from '@/components/LoadingIndicator';
+
+// 1. Define the TypeScript interface for a Category
 interface Category {
   id: string | number;
   name: string;
@@ -12,157 +16,77 @@ interface Category {
   slug: string;
 }
 
-// 2. CategoriesPage component
+// 2. Create the asynchronous fetcher function. This can be co-located or moved to a dedicated api-hooks file.
+const fetchCategories = async (): Promise<Category[]> => {
+  const { data } = await apiClient.get('/api/categories');
+  return data;
+};
+
+// 3. The CategoriesPage component, now vastly simplified.
 const CategoriesPage: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: categories,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<Category[], Error>({
+    queryKey: ['categories'], // A unique key for caching this query
+    queryFn: fetchCategories,
+  });
 
-  // 3. useEffect to fetch categories when the component mounts
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await apiClient.get('/api/categories');
-
-        setCategories(response.data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('An unexpected error occurred.');
-        }
-        console.error("Error fetching categories:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  // 4. Render loading state
+  // 4. Render a localized loading state
   if (isLoading) {
     return (
-      <div style={styles.container}>
-        <p style={styles.loadingText}>Loading categories...</p>
+      <div className="flex justify-center items-center h-64">
+        {/* We reuse the loading indicator, but it's no longer a global overlay */}
+        <LoadingIndicator size={40} withText={true} />
       </div>
     );
   }
 
-  // 5. Render error state
-  if (error) {
+  // 5. Render a localized error state
+  if (isError) {
     return (
-      <div style={styles.container}>
-        <p style={styles.errorText}>Error: {error}</p>
-        <button onClick={() => window.location.reload()} style={styles.button}>Try Again</button>
+      <div className="flex flex-col items-center justify-center h-64 bg-red-50 text-red-700 p-4 rounded-lg">
+        <h2 className="text-xl font-bold mb-2">Failed to load categories</h2>
+        <p>{error?.message || 'An unexpected error occurred.'}</p>
       </div>
     );
   }
 
-  // 6. Render categories list
+  // 6. Render the categories list
   return (
-    <div style={styles.container}>
-      <h1 style={styles.header}>Explore Knowledge Categories</h1>
-      {categories.length === 0 ? (
-        <p style={styles.infoText}>No categories available at the moment. Please check back later.</p>
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+        Explore Knowledge Categories
+      </h1>
+      {categories?.length === 0 ? (
+        <p className="text-center text-gray-500">
+          No categories available at the moment. Please check back later.
+        </p>
       ) : (
-        <ul style={styles.list}>
-          {categories.map((category) => (
-            <li key={category.id} style={styles.listItem}>
-              {/*
-                Replace <a> with <Link> from Next.js or React Router if you're using them.
-                Example for Next.js:
-                <Link href={`/categories/${category.slug}/tracks`} passHref>
-                  <a style={styles.link}>{category.name}</a>
-                </Link>
-
-                Example for React Router:
-                <Link to={`/categories/${category.slug}/tracks`} style={styles.link}>
-                  {category.name}
-                </Link>
-              */}
-              <a href={`/categories/${category.slug}/tracks`} style={styles.link}>
-                <h2 style={styles.categoryName}>{category.name}</h2>
-              </a>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories?.map((category) => (
+            <Link
+              key={category.id}
+              href={`/categories/${category.slug}/tracks`} // Assumes slug exists
+              passHref
+              className="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 ease-in-out"
+            >
+              <h2 className="text-xl font-semibold text-green-700 mb-2">
+                {category.name}
+              </h2>
               {category.description && (
-                <p style={styles.descriptionText}>{category.description}</p>
+                <p className="text-gray-600 text-sm line-clamp-3">
+                  {category.description}
+                </p>
               )}
-            </li>
+            </Link>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
-};
-
-// Basic inline styles for demonstration
-const styles = {
-  container: {
-    fontFamily: 'Arial, sans-serif',
-    padding: '20px',
-    maxWidth: '800px',
-    margin: '0 auto',
-  } as React.CSSProperties,
-  header: {
-    textAlign: 'center',
-    color: '#333',
-    marginBottom: '30px',
-  } as React.CSSProperties,
-  loadingText: {
-    textAlign: 'center',
-    fontSize: '1.2em',
-    color: '#555',
-  } as React.CSSProperties,
-  errorText: {
-    textAlign: 'center',
-    fontSize: '1.2em',
-    color: 'red',
-    marginBottom: '15px',
-  } as React.CSSProperties,
-  infoText: {
-    textAlign: 'center',
-    fontSize: '1em',
-    color: '#777',
-  } as React.CSSProperties,
-  list: {
-    listStyleType: 'none',
-    padding: 0,
-  } as React.CSSProperties,
-  listItem: {
-    backgroundColor: '#f9f9f9',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    padding: '15px 20px',
-    marginBottom: '15px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-  } as React.CSSProperties,
-  link: {
-    textDecoration: 'none',
-  } as React.CSSProperties,
-  categoryName: {
-    margin: '0 0 5px 0',
-    color: '#007bff', // A typical link blue
-    fontSize: '1.5em',
-  } as React.CSSProperties,
-  descriptionText: {
-    margin: '0',
-    fontSize: '0.95em',
-    color: '#555',
-    lineHeight: '1.4',
-  } as React.CSSProperties,
-  button: {
-    display: 'block',
-    margin: '20px auto 0',
-    padding: '10px 20px',
-    fontSize: '1em',
-    color: '#fff',
-    backgroundColor: '#007bff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  } as React.CSSProperties,
 };
 
 export default CategoriesPage;
