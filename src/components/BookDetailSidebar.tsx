@@ -6,6 +6,17 @@ import React from 'react';
 import { Book } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/Button';
+import { useSessionContext } from '@/context/SessionContext'; // Import session context
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // Import mutation hooks
+import apiClient from '@/api'; // Import our configured axios instance
+import { toast } from 'sonner'; // Import toast for notifications
+
+// --- SYNTH-STACK: Define the mutation function ---
+async function addBookToLibrary(bookId: string) {
+  const { data } = await apiClient.post('/api/my-books', { book_id: bookId });
+  return data;
+}
+
 
 interface BookDetailSidebarProps {
   book: Book | null;
@@ -13,8 +24,31 @@ interface BookDetailSidebarProps {
 }
 
 const BookDetailSidebar: React.FC<BookDetailSidebarProps> = ({ book, onClose }) => {
+  const { session } = useSessionContext(); // Get session to check if user is logged in
+  const queryClient = useQueryClient(); // To invalidate queries later if needed
   const placeholderImageUrl = 'https://via.placeholder.com/300x450.png?text=No+Cover';
   const isOpen = !!book;
+
+  // --- SYNTH-STACK: Setup the mutation ---
+  const { mutate: addBook, isPending } = useMutation({
+    mutationFn: addBookToLibrary,
+    onSuccess: (data) => {
+      toast.success(`"${book?.title}" has been added to your library!`);
+      // Optionally, you could invalidate queries that fetch "my-books"
+      // queryClient.invalidateQueries({ queryKey: ['my-books'] });
+      onClose(); // Close the sidebar on success
+    },
+    onError: (error: any) => {
+      // The backend returns a specific error message
+      const errorMessage = error.response?.data?.error || "An unknown error occurred.";
+      toast.error(errorMessage);
+    }
+  });
+
+  const handleAddBookClick = () => {
+    if (!book) return;
+    addBook(book.id);
+  };
 
   return (
     <aside
@@ -66,7 +100,18 @@ const BookDetailSidebar: React.FC<BookDetailSidebarProps> = ({ book, onClose }) 
 
           {/* Footer Actions */}
           <div className="border-t p-4">
-            <Button className="w-full">Add to My Books</Button>
+            <Button 
+              className="w-full"
+              onClick={handleAddBookClick}
+              disabled={!session || isPending} // Disable if not logged in or if adding
+            >
+              {isPending ? 'Adding...' : 'Add to My Books'}
+            </Button>
+            {!session && (
+                <p className="text-center text-xs text-gray-500 mt-2">
+                    You must be logged in to add books.
+                </p>
+            )}
           </div>
         </div>
       )}

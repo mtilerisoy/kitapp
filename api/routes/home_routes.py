@@ -2,6 +2,7 @@ from flask import request, jsonify, g
 from api.services import book_service, categories_service
 from api.utils.logger_config import logger
 from api.utils.authentication import login_required
+from uuid import UUID
 
 def register_home_routes(app):
     logger.debug("Registering home routes")
@@ -66,6 +67,28 @@ def register_home_routes(app):
         except Exception as e:
             logger.error(f"Error fetching books: {str(e)}")
             return jsonify({"error": "Internal server error fetching books"}), 500
+    
+    @app.route('/api/my-books', methods=['POST'])
+    @login_required
+    def add_to_my_books():
+        logger.debug("Add to my books route accessed")
+        
+        data = request.get_json()
+        if not data or 'book_id' not in data:
+            return jsonify({"error": "book_id is required."}), 400
+
+        try:
+            book_id = UUID(data['book_id'])
+            user_id = g.user_id # Guaranteed to exist by @login_required
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid book_id format."}), 400
+
+        result = book_service.add_book_to_user_library(user_id=user_id, book_id=book_id)
+
+        if result["success"]:
+            return jsonify(result["data"]), result["status_code"]
+        else:
+            return jsonify({"error": result["message"]}), result["status_code"]
     
     @app.route('/api/books', methods=['POST'])
     def create_book():

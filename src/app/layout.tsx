@@ -1,3 +1,5 @@
+// src/app/layout.tsx
+
 'use client';
 
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -7,6 +9,7 @@ import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import { SessionProvider } from '@/context/SessionContext';
 import QueryProvider from '@/context/QueryProvider';
+import { Toaster } from 'sonner'; // SYNTH-STACK: Import Toaster
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,10 +40,11 @@ export default function RootLayout({
           content="Your personal platform to track and discover books."
         />
       </head>
-      {/* This body tag correctly inherits its styles from our new globals.css */ }
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider>
           <QueryProvider>
+            {/* SYNTH-STACK: Add Toaster component here */}
+            <Toaster position="top-right" richColors />
             <div className="flex flex-col min-h-screen">
               <Header onProfileButtonClick={toggleSidebar} />
               <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
