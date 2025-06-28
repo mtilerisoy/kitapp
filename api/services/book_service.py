@@ -7,7 +7,8 @@ from uuid import UUID
 
 def get_discover_books(page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
     """
-    Fetches a paginated list of books for the discover page.
+    Fetches a paginated list of books for the discover page,
+    including whether each book is in the current user's library.
 
     Args:
         page (int): The page number to fetch.
@@ -25,11 +26,16 @@ def get_discover_books(page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
 
     try:
         supabase_client = get_supabase_client()
-        books_repo = BooksRepository(supabase_client)
-        books_data = books_repo.fetch_paginated_books(page=page, limit=limit)
+        params = {'page_num': page, 'page_size': limit}
+        result = supabase_client.rpc('get_discover_books_for_user', params).execute()
+        
+        books_data = result.data
+        
+        logger.info(f"Fetched {len(books_data)} books via RPC for page {page}.")
         return books_data
+        
     except Exception as e:
-        logger.error(f"Error in book service while getting discover books: {e}")
+        logger.error(f"Error in book service while calling RPC for discover books: {e}")
         return None
     
 def add_book_to_user_library(user_id: UUID, book_id: UUID) -> Dict[str, Any]:

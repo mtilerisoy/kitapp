@@ -7,4 +7,5 @@ export interface Book {
   cover_image_url: string | null;
   description: string | null;
   total_pages: number | null;
+  is_in_library: boolean;
 }

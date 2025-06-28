@@ -6,17 +6,30 @@ import React from 'react';
 import { Book } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/Button';
-import { useSessionContext } from '@/context/SessionContext'; // Import session context
-import { useMutation, useQueryClient } from '@tanstack/react-query'; // Import mutation hooks
-import apiClient from '@/api'; // Import our configured axios instance
-import { toast } from 'sonner'; // Import toast for notifications
+import { useSessionContext } from '@/context/SessionContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '@/api';
+import { toast } from 'sonner';
+import { AxiosError } from 'axios'; // SYNTH-STACK: Import the correct error type
 
-// --- SYNTH-STACK: Define the mutation function ---
-async function addBookToLibrary(bookId: string) {
+// This defines the expected shape of the data returned by the backend on success.
+// It corresponds to a row in the 'user_reading_progress' table.
+interface UserReadingProgress {
+  user_id: string;
+  book_id: string;
+  status: 'to_read' | 'reading' | 'finished' | 'abandoned';
+  last_progress_update_at: string;
+}
+
+// This defines the shape of the error response from our Flask API.
+interface ApiError {
+  error: string;
+}
+
+async function addBookToLibrary(bookId: string): Promise<UserReadingProgress> {
   const { data } = await apiClient.post('/api/my-books', { book_id: bookId });
   return data;
 }
-
 
 interface BookDetailSidebarProps {
   book: Book | null;
@@ -24,29 +37,30 @@ interface BookDetailSidebarProps {
 }
 
 const BookDetailSidebar: React.FC<BookDetailSidebarProps> = ({ book, onClose }) => {
-  const { session } = useSessionContext(); // Get session to check if user is logged in
-  const queryClient = useQueryClient(); // To invalidate queries later if needed
+  const { session } = useSessionContext();
+  const queryClient = useQueryClient();
   const placeholderImageUrl = 'https://via.placeholder.com/300x450.png?text=No+Cover';
   const isOpen = !!book;
 
-  // --- SYNTH-STACK: Setup the mutation ---
-  const { mutate: addBook, isPending } = useMutation({
+  const { mutate: addBook, isPending } = useMutation<
+    UserReadingProgress, // Type of data returned on success
+    AxiosError<ApiError>,  // Type of error
+    string                 // Type of variables passed to mutationFn (bookId)
+  >({
     mutationFn: addBookToLibrary,
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success(`"${book?.title}" has been added to your library!`);
-      // Optionally, you could invalidate queries that fetch "my-books"
-      // queryClient.invalidateQueries({ queryKey: ['my-books'] });
-      onClose(); // Close the sidebar on success
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      onClose();
     },
-    onError: (error: any) => {
-      // The backend returns a specific error message
+    onError: (error) => {
       const errorMessage = error.response?.data?.error || "An unknown error occurred.";
       toast.error(errorMessage);
     }
   });
 
   const handleAddBookClick = () => {
-    if (!book) return;
+    if (!book || book.is_in_library) return;
     addBook(book.id);
   };
 
@@ -67,9 +81,7 @@ const BookDetailSidebar: React.FC<BookDetailSidebarProps> = ({ book, onClose }) 
               className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
               aria-label="Close details"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
           
@@ -97,20 +109,30 @@ const BookDetailSidebar: React.FC<BookDetailSidebarProps> = ({ book, onClose }) 
               </p>
             </div>
           </div>
-
+          
           {/* Footer Actions */}
           <div className="border-t p-4">
-            <Button 
-              className="w-full"
-              onClick={handleAddBookClick}
-              disabled={!session || isPending} // Disable if not logged in or if adding
-            >
-              {isPending ? 'Adding...' : 'Add to My Books'}
-            </Button>
-            {!session && (
+            {session ? (
+              book.is_in_library ? (
+                <Button className="w-full" disabled variant="secondary">
+                  ✓ In Your Library
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full"
+                  onClick={handleAddBookClick}
+                  disabled={isPending}
+                >
+                  {isPending ? 'Adding...' : 'Add to My Books'}
+                </Button>
+              )
+            ) : (
+              <>
+                <Button className="w-full" disabled>Add to My Books</Button>
                 <p className="text-center text-xs text-gray-500 mt-2">
                     You must be logged in to add books.
                 </p>
+              </>
             )}
           </div>
         </div>
