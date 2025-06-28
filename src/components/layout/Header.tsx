@@ -18,6 +18,7 @@ const Header: React.FC<HeaderProps> = ({ onProfileButtonClick }) => {
         <div className="flex items-center">
           <nav className="hidden md:flex space-x-4 mr-4">
             <Link href="/discover" className="text-gray-600 hover:text-green-700 transition-colors">Discover</Link>
+            <Link href="/categories" className="text-gray-600 hover:text-green-700 transition-colors">Categories</Link>
             <Link href="/my-books" className="text-gray-600 hover:text-green-700 transition-colors">My Books</Link>
           </nav>
           <ProfileButton onClick={onProfileButtonClick} />
