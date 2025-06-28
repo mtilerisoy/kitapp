@@ -1,4 +1,3 @@
-
 ### Part 2: Detailed Database Schema Documentation
 
 Here is the new, detailed markdown file. You should save this as `DATABASE_SCHEMA.md` in the root of your project repository.
@@ -273,4 +272,59 @@ We use custom `ENUM` types to ensure data consistency for specific fields.
     EXECUTE FUNCTION public.handle_new_user();
   ```
 
-**(End of DATABASE_SCHEMA.md)**
+### `get_discover_books_for_user()`
+
+* **Type:** `FUNCTION` (Remote Procedure Call - RPC)
+* **Purpose:** This function is the primary data source for the "Discover" page. It efficiently fetches a paginated list of books and, crucially, checks if each book is already present in the currently authenticated user's library. This avoids the N+1 query problem and allows the UI to instantly know the status of each book without making extra API calls.
+* **Execution:** This function is called from our backend service. It runs with the privileges of the authenticated user whose JWT is passed to the database client, allowing `auth.uid()` to securely identify them.
+* **Key Logic:**
+  1. It accepts `page_num` and `page_size` for pagination.
+  2. It queries the `public.books` table.
+  3. For each book, it performs a highly efficient `EXISTS` subquery on `public.user_reading_progress`.
+  4. This subquery checks if a row exists where `book_id` matches the current book and `user_id` matches the ID of the logged-in user (`auth.uid()`).
+  5. The result of this check is returned as a new boolean column named `is_in_library`.
+* **Returns:** A `TABLE` containing all columns from `public.books` plus the new `is_in_library` boolean.
+* **SQL Definition:**
+  ```sql
+  CREATE OR REPLACE FUNCTION public.get_discover_books_for_user(
+      page_num int,
+      page_size int
+  )
+  RETURNS TABLE (
+      id uuid,
+      title text,
+      author text,
+      cover_image_url text,
+      description text,
+      total_pages int,
+      is_in_library boolean
+  )
+  LANGUAGE plpgsql
+  AS $$
+  BEGIN
+      RETURN QUERY
+      SELECT
+          b.id,
+          b.title,
+          b.author,
+          b.cover_image_url,
+          b.description,
+          b.total_pages,
+          -- The core logic: check if a matching record exists in the user's progress table.
+          -- auth.uid() securely gets the ID of the user making the request.
+          (EXISTS (
+              SELECT 1
+              FROM public.user_reading_progress urp
+              WHERE urp.book_id = b.id AND urp.user_id = auth.uid()
+          )) AS is_in_library
+      FROM
+          public.books AS b
+      ORDER BY
+          b.created_at DESC
+      LIMIT
+          page_size
+      OFFSET
+          (page_num - 1) * page_size;
+  END;
+  $$;
+  ```
