@@ -1,3 +1,10 @@
+/*
+  SYNTH-STACK: This is the definitive, corrected version.
+  It PRESERVES the @import and @theme rules from your working file,
+  and surgically replaces the conflicting variables and body styles.
+*/
+
+/* Part 1: Keep the parts your compiler understands */
 @import "tailwindcss";
 
 :root {
@@ -12,95 +19,87 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
+/* Part 2: Keep the @tailwind directives. While likely redundant with @import,
+   it is safer to keep them as your build process clearly works with this file structure. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
 
-  /* Custom color palette */
-  --color-white: #FFFFFF;
-  --color-gray-light: #F3F4F6; /* gray-100 */
-  --color-gray-medium: #E5E7EB; /* gray-200 */
-  --color-gray-dark: #4B5563; /* gray-600 */
-  --color-green-light: #D1FAE5; /* green-100 */
-  --color-green-medium: #A7F3D0; /* green-200 */
-  --color-green-dark: #059669; /* green-600 */
-  --color-green-darker: #047857; /* green-700 */
-  --color-red-light: #FEE2E2; /* red-100 */
-  --color-red-dark: #DC2626; /* red-600 */
-
-  --font-sans: '--font-geist-sans', sans-serif;
-  --font-mono: '--font-geist-mono', monospace;
-
-  --spacing: 4px; /* Base unit for spacing, can be adjusted */
-}
-
-@media (prefers-color-scheme: dark) {
+/*
+  Part 3: REPLACE the old, conflicting theming with our new, unified system.
+  This @layer rule defines all the variables our modern components will use.
+*/
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    /* Light Theme (default) */
+    --background: 210 40% 98%; /* A light, clean gray background */
+    --foreground: 222.2 84% 4.9%;
 
-    /* Adjust dark theme colors if needed, for now, we focus on light theme */
-    --color-gray-light: #1F2937; /* gray-800 */
-    --color-gray-medium: #374151; /* gray-700 */
-    --color-gray-dark: #D1D5DB; /* gray-300 */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 142.1 76.2% 36.3%; /* Our Green-600 */
+    --primary-foreground: 355.7 100% 97.3%;
+
+    --secondary: 210 40% 96.1%; /* Gray-100 */
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%; /* Gray-500 */
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%; /* Red */
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142.1 76.2% 36.3%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark Theme */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    /* ... add other dark mode variables as needed ... */
   }
 }
 
+/*
+  Part 4: REPLACE the old body style with a simple, direct application of our theme.
+  This removes the conflicting linear-gradient and rgb() variables.
+*/
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  font-family: var(--font-sans);
+  @apply bg-background text-foreground;
 }
 
-/* Custom scrollbar for a cleaner look */
+/*
+  Part 5: KEEP your working scrollbar and selection styles, but update them
+  to use our new theme variables for consistency.
+*/
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-gray-light);
+  background: hsl(var(--secondary));
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-gray-medium);
+  background: hsl(var(--muted-foreground) / 0.5);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-dark);
+  background: hsl(var(--muted-foreground) / 0.7);
 }
 
-/* Custom text selection color */
 ::selection {
-  background-color: var(--color-green-medium);
-  color: var(--color-gray-dark);
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  background-color: hsl(var(--primary) / 0.3);
 }
