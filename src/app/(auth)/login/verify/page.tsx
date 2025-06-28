@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import OtpVerification from '@/components/OtpVerification'; // Updated path
 import { supabase } from '@/utils/supabase';
@@ -21,7 +21,7 @@ function VerifyPageContent() {
         <div className="grid gap-2 text-center">
           <h1 className="text-2xl font-bold text-green-600">Check your email</h1>
           <p className="text-balance text-muted-foreground text-gray-600">
-            We've sent a verification code to
+            We&aposve sent a verification code to
             <br />
             <span className="font-semibold text-gray-800">{email}</span>
           </p>
