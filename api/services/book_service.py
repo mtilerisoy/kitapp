@@ -4,6 +4,7 @@ from api.utils.logger_config import logger
 from typing import Optional, List, Dict, Any
 from api.db.repositories.user_reading_progress_repository import UserReadingProgressRepository
 from uuid import UUID
+from datetime import datetime, timezone
 
 def get_discover_books(page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
     """
@@ -108,3 +109,62 @@ def get_user_library(user_id: UUID) -> Optional[Dict[str, List[Dict[str, Any]]]]
     except Exception as e:
         logger.error(f"Unexpected error in get_user_library service: {e}")
         return None
+
+def update_user_book_progress(
+    user_id: UUID,
+    book_id: UUID,
+    status: Optional[str] = None,
+    progress: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Service layer logic to update book progress, handling business rules.
+
+    Args:
+        user_id: The ID of the authenticated user.
+        book_id: The ID of the book to update.
+        status: The new reading status.
+        progress: The new progress percentage.
+
+    Returns:
+        A dictionary indicating the result of the operation.
+    """
+    if status is None and progress is None:
+        return {"success": False, "status_code": 400, "message": "Either status or progress must be provided."}
+    
+    updates = {}
+    now = datetime.now(timezone.utc).isoformat()
+
+    if status:
+        valid_statuses = ['to_read', 'reading', 'finished', 'abandoned']
+        if status not in valid_statuses:
+            return {"success": False, "status_code": 400, "message": f"Invalid status. Must be one of {valid_statuses}."}
+        updates['status'] = status
+        
+        # Business logic for timestamps
+        if status == 'reading':
+            updates['started_reading_at'] = now
+        elif status == 'finished':
+            updates['finished_reading_at'] = now
+            updates['progress_percentage'] = 100 # Automatically set progress to 100% on finish
+    
+    if progress is not None:
+        if not 0 <= progress <= 100:
+            return {"success": False, "status_code": 400, "message": "Progress must be between 0 and 100."}
+        updates['progress_percentage'] = progress
+
+    # Always update the last interaction timestamp
+    updates['last_progress_update_at'] = now
+
+    try:
+        supabase_client = get_supabase_client()
+        progress_repo = UserReadingProgressRepository(supabase_client)
+        result = progress_repo.update_book_progress(user_id, book_id, updates)
+
+        if result:
+            return {"success": True, "status_code": 200, "data": result}
+        else:
+            return {"success": False, "status_code": 404, "message": "Book not found in your library."}
+
+    except Exception as e:
+        logger.error(f"Unexpected error in update_user_book_progress service: {e}")
+        return {"success": False, "status_code": 500, "message": "An unexpected server error occurred."}

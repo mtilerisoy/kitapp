@@ -92,3 +92,39 @@ class UserReadingProgressRepository(BaseRepository):
             
         except Exception as e:
             return self._handle_supabase_error(e, f"fetch_books_for_user (user_id={user_id})")
+    
+    # --- SYNTH-STACK: NEW FUNCTION ---
+    def update_book_progress(self, user_id: UUID, book_id: UUID, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Updates a user's reading progress for a specific book.
+
+        Args:
+            user_id: The ID of the user.
+            book_id: The ID of the book to update.
+            updates: A dictionary of fields to update (e.g., {'status': 'reading'}).
+
+        Returns:
+            The updated record dictionary, or None on error.
+        """
+        if not self.client:
+            self.logger.error("Supabase client is not initialized.")
+            return None
+        
+        try:
+            # The .eq() clauses ensure the user can only update their own records.
+            data, count = self.client.table(self.table_name)\
+                .update(updates)\
+                .eq('user_id', str(user_id))\
+                .eq('book_id', str(book_id))\
+                .execute()
+            
+            if data and len(data[1]) > 0:
+                self.logger.info(f"Updated progress for book '{str(book_id)[:8]}' for user '{str(user_id)[:8]}'.")
+                return data[1][0]
+            
+            # This case means the book wasn't found for that user, which is an error condition.
+            self.logger.warning(f"Attempted to update a book that does not exist in user's library. User: {user_id}, Book: {book_id}")
+            return None
+
+        except Exception as e:
+            return self._handle_supabase_error(e, f"update_book_progress (user_id={user_id}, book_id={book_id})")

@@ -103,6 +103,30 @@ def register_home_routes(app):
                 logger.error(f"Error fetching user library: {e}")
                 return jsonify({"error": "Internal server error."}), 500
     
+    @app.route('/api/my-books/<uuid:book_id>', methods=['PATCH'])
+    @login_required
+    def update_my_book(book_id: UUID):
+        user_id = g.user_id
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "Request body cannot be empty."}), 400
+
+        status = data.get('status')
+        progress = data.get('progress')
+
+        result = book_service.update_user_book_progress(
+            user_id=user_id,
+            book_id=book_id,
+            status=status,
+            progress=progress
+        )
+
+        if result["success"]:
+            return jsonify(result["data"]), result["status_code"]
+        else:
+            return jsonify({"error": result["message"]}), result["status_code"]
+    
     @app.route('/api/books', methods=['POST'])
     def create_book():
         logger.debug("Create book route accessed")
