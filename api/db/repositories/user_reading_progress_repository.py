@@ -54,46 +54,55 @@ class UserReadingProgressRepository(BaseRepository):
     def fetch_books_for_user(self, user_id: UUID) -> Optional[List[Dict[str, Any]]]:
         """
         Fetches all books in a user's library, joining with the books table
-        to get full book details.
+        to get full book details in a flattened structure.
 
         Args:
             user_id: The ID of the user.
 
         Returns:
-            A list of dictionaries, where each dict contains progress info
-            and nested book details, or None on error.
+            A list of flattened dictionaries, or None on error.
         """
         if not self.client:
             self.logger.error("Supabase client is not initialized.")
             return None
 
         try:
-            # The query joins user_reading_progress with books on book_id
-            # and filters by the current user_id.
-            # The select statement specifies the structure we want.
-            data, count = self.client.table(self.table_name)\
-                .select("""
-                    status,
-                    progress_percentage,
-                    book:books (
-                        id,
-                        title,
-                        author,
-                        cover_image_url
-                    )
-                """)\
-                .eq('user_id', str(user_id))\
-                .order('last_progress_update_at', desc=True)\
-                .execute()
+            # The query joins user_reading_progress (aliased as 'urp') with books (aliased as 'b').
+            # The select statement now pulls columns from both tables into a single flat object.
+            data, count = self.client.table(self.table_name).select("""
+                status,
+                progress_percentage,
+                started_reading_at,
+                finished_reading_at,
+                book_id: book_id,
+                books (
+                    id,
+                    title,
+                    author,
+                    cover_image_url,
+                    description,
+                    total_pages
+                )
+            """).eq('user_id', str(user_id))\
+               .order('last_progress_update_at', desc=True)\
+               .execute()
             
-            records = data[1] if data and len(data) > 1 else []
-            self.logger.info(f"Fetched {len(records)} books for user '{str(user_id)[:8]}'.")
+            # Now we need to flatten the data structure
+            records = []
+            if data and len(data[1]) > 1:
+                for item in data[1]:
+                    book_details = item.pop('books') # Remove the nested 'books' object
+                    if book_details: # Ensure it's not null
+                        # Merge the two dictionaries
+                        flat_item = {**item, **book_details}
+                        records.append(flat_item)
+
+            self.logger.info(f"Fetched and flattened {len(records)} books for user '{str(user_id)[:8]}'.")
             return records
             
         except Exception as e:
             return self._handle_supabase_error(e, f"fetch_books_for_user (user_id={user_id})")
     
-    # --- SYNTH-STACK: NEW FUNCTION ---
     def update_book_progress(self, user_id: UUID, book_id: UUID, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Updates a user's reading progress for a specific book.
