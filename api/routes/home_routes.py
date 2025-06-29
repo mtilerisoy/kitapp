@@ -4,6 +4,8 @@ from api.utils.logger_config import logger
 from api.utils.authentication import login_required
 from uuid import UUID
 
+from api.db.supabase_client import get_supabase_admin_client
+
 def register_home_routes(app):
     logger.debug("Registering home routes")
 
@@ -67,6 +69,46 @@ def register_home_routes(app):
         except Exception as e:
             logger.error(f"Error fetching books: {str(e)}")
             return jsonify({"error": "Internal server error fetching books"}), 500
+    
+    # --- SYNTH-STACK: NEW ROUTE FOR FETCHING BOOK CONTENT URL ---
+    @app.route('/api/books/<uuid:book_id>/read', methods=['GET'])
+    @login_required
+    def get_book_read_url(book_id: UUID):
+        try:
+            # SYNTH-STACK: Use the new admin client to bypass RLS for this system task
+            supabase_admin = get_supabase_admin_client()
+            
+            # 1. Fetch the book record to get its storage path
+            book_record_req = supabase_admin.table('books').select('epub_storage_path').eq('id', str(book_id)).single().execute()
+            
+            # The response object from supabase-py v1 is different, access data attribute
+            book_record = book_record_req.data
+            
+            if not book_record or not book_record.get('epub_storage_path'):
+                logger.warning(f"Book content path not found for book_id: {book_id}")
+                return jsonify({"error": "Book content not available."}), 404
+
+            storage_path = book_record.get('epub_storage_path')
+            # Assuming storage_path is like 'public-epubs/filename.epub'
+            # We need to extract the bucket name and the file path within the bucket
+            path_parts = storage_path.split('/', 1)
+            bucket_name = path_parts[0]
+            file_path = path_parts[1] if len(path_parts) > 1 else ''
+            
+            # 2. Generate a signed URL valid for 1 hour (3600 seconds)
+            signed_url_response = supabase_admin.storage.from_(bucket_name).create_signed_url(file_path, 3600)
+
+            # The response is now a dictionary, not an object with attributes
+            if 'error' in signed_url_response and signed_url_response['error'] is not None:
+                logger.error(f"Error creating signed URL: {signed_url_response['error']}")
+                return jsonify({"error": "Could not retrieve book content."}), 500
+            
+            signed_url = signed_url_response.get('signedURL')
+            return jsonify({"signed_url": signed_url}), 200
+
+        except Exception as e:
+            logger.error(f"Unexpected error in get_book_read_url: {e}", exc_info=True)
+            return jsonify({"error": "Internal server error."}), 500
     
     @app.route('/api/my-books', methods=['GET', 'POST'])
     @login_required
