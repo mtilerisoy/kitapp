@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/api';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation'; // SYNTH-STACK: Import useRouter
 
 // --- Type Definitions for strictness ---
 type ReadingStatus = 'to_read' | 'reading' | 'finished' | 'abandoned';
@@ -34,7 +35,7 @@ interface ApiError {
   error: string;
 }
 
-// --- Mutation function (identical to before, but good to keep co-located) ---
+// --- Mutation function ---
 async function updateBookProgress(payload: UpdatePayload) {
   const { bookId, ...updates } = payload;
   const { data } = await apiClient.patch(`/api/my-books/${bookId}`, updates);
@@ -48,6 +49,7 @@ interface LibraryBookSidebarProps {
 }
 
 export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, onClose }) => {
+  const router = useRouter(); // SYNTH-STACK: Initialize router
   const queryClient = useQueryClient();
   const placeholderImageUrl = 'https://via.placeholder.com/300x450.png?text=No+Cover';
   const isOpen = !!book;
@@ -57,7 +59,7 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
     onSuccess: () => {
       toast.success(`"${book?.title}" has been updated.`);
       queryClient.invalidateQueries({ queryKey: ['my-books'] });
-      onClose(); // Close sidebar on success
+      // We don't close the sidebar on status change anymore, so the user can see the change and continue interacting.
     },
     onError: (error) => {
       const errorMessage = error.response?.data?.error || "Failed to update book.";
@@ -68,6 +70,12 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
   const handleStatusChange = (newStatus: ReadingStatus) => {
     if (!book) return;
     mutate({ bookId: book.id, status: newStatus });
+  };
+
+  const handleReadNow = () => {
+    if (!book) return;
+    onClose(); // Close the sidebar before navigating
+    router.push(`/read/${book.id}`);
   };
 
   return (
@@ -117,7 +125,6 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
                       />
                     </div>
                 </div>
-                {/* We can add a slider here later */}
               </div>
             )}
             
@@ -131,9 +138,14 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
 
           {/* Footer Actions */}
           <div className="border-t p-4 space-y-3">
+             {/* SYNTH-STACK: "Read Now" is the new primary action */}
+             <Button className="w-full" onClick={handleReadNow}>
+                Read Now
+             </Button>
+            
              {book.status === 'to_read' && (
-                <Button className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
-                    Start Reading
+                <Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
+                    Move to &ldquoCurrently Reading&ldquo
                 </Button>
             )}
              {book.status === 'reading' && (
@@ -142,7 +154,7 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
                 </Button>
             )}
              {book.status === 'finished' && (
-                <Button className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
+                <Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
                     Read Again
                 </Button>
             )}
