@@ -24,6 +24,7 @@ interface UpdatePayload {
   progress?: number;
 }
 
+// SYNTH-STACK FIX: Define the expected API error shape
 interface ApiError {
   error: string;
 }
@@ -44,6 +45,7 @@ interface UpdateBookModalProps {
 export const UpdateBookModal: React.FC<UpdateBookModalProps> = ({ book, onClose }) => {
   const queryClient = useQueryClient();
 
+  // SYNTH-STACK FIX: Properly type the useMutation hook generics
   const { mutate, isPending } = useMutation<any, AxiosError<ApiError>, UpdatePayload>({
     mutationFn: updateBookProgress,
     onSuccess: () => {
@@ -51,6 +53,7 @@ export const UpdateBookModal: React.FC<UpdateBookModalProps> = ({ book, onClose 
       queryClient.invalidateQueries({ queryKey: ['my-books'] });
       onClose();
     },
+    // SYNTH-STACK FIX: Replace 'any' with the specific AxiosError type
     onError: (error) => {
       const errorMessage = error.response?.data?.error || "Failed to update book.";
       toast.error(errorMessage);
@@ -65,19 +68,9 @@ export const UpdateBookModal: React.FC<UpdateBookModalProps> = ({ book, onClose 
   if (!book) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div 
-        className="relative w-full max-w-md p-6 bg-white rounded-lg shadow-xl"
-        onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking inside
-      >
-        <button 
-          onClick={onClose} 
-          className="absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-100"
-          aria-label="Close modal"
-        >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative w-full max-w-md p-6 bg-white rounded-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-100" aria-label="Close modal">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
 
@@ -87,29 +80,10 @@ export const UpdateBookModal: React.FC<UpdateBookModalProps> = ({ book, onClose 
         </div>
 
         <div className="mt-8 space-y-4">
-            {book.status === 'to_read' && (
-                <Button className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
-                    Start Reading
-                </Button>
-            )}
-             {book.status === 'reading' && (
-                <Button className="w-full" onClick={() => handleStatusChange('finished')} disabled={isPending}>
-                    Mark as Finished
-                </Button>
-            )}
-             {book.status === 'finished' && (
-                <Button className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
-                    Read Again
-                </Button>
-            )}
-             <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={() => handleStatusChange('abandoned')} 
-                disabled={isPending}
-             >
-                Move to Abandoned
-             </Button>
+            {book.status === 'to_read' && (<Button className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>Start Reading</Button>)}
+             {book.status === 'reading' && (<Button className="w-full" onClick={() => handleStatusChange('finished')} disabled={isPending}>Mark as Finished</Button>)}
+             {book.status === 'finished' && (<Button className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>Read Again</Button>)}
+             <Button variant="outline" className="w-full" onClick={() => handleStatusChange('abandoned')} disabled={isPending}>Move to Abandoned</Button>
         </div>
       </div>
     </div>

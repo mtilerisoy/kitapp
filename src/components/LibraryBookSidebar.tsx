@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/api';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation'; // SYNTH-STACK: Import useRouter
+import { useRouter } from 'next/navigation';
 
 // --- Type Definitions for strictness ---
 type ReadingStatus = 'to_read' | 'reading' | 'finished' | 'abandoned';
@@ -31,6 +31,7 @@ interface UpdatePayload {
   progress?: number;
 }
 
+// SYNTH-STACK FIX: Define the expected API error shape
 interface ApiError {
   error: string;
 }
@@ -49,18 +50,19 @@ interface LibraryBookSidebarProps {
 }
 
 export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, onClose }) => {
-  const router = useRouter(); // SYNTH-STACK: Initialize router
+  const router = useRouter();
   const queryClient = useQueryClient();
   const placeholderImageUrl = 'https://via.placeholder.com/300x450.png?text=No+Cover';
   const isOpen = !!book;
 
+  // SYNTH-STACK FIX: Properly type the useMutation hook generics
   const { mutate, isPending } = useMutation<any, AxiosError<ApiError>, UpdatePayload>({
     mutationFn: updateBookProgress,
     onSuccess: () => {
       toast.success(`"${book?.title}" has been updated.`);
       queryClient.invalidateQueries({ queryKey: ['my-books'] });
-      // We don't close the sidebar on status change anymore, so the user can see the change and continue interacting.
     },
+    // SYNTH-STACK FIX: Replace 'any' with the specific AxiosError type
     onError: (error) => {
       const errorMessage = error.response?.data?.error || "Failed to update book.";
       toast.error(errorMessage);
@@ -74,7 +76,7 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
 
   const handleReadNow = () => {
     if (!book) return;
-    onClose(); // Close the sidebar before navigating
+    onClose();
     router.push(`/read/${book.id}`);
   };
 
@@ -87,7 +89,6 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
     >
       {book && (
         <div className="flex h-full flex-col">
-          {/* Header */}
           <div className="flex items-center justify-between border-b p-4">
             <h2 className="text-xl font-semibold text-gray-800">My Book</h2>
             <button onClick={onClose} className="rounded-full p-2 text-gray-500 hover:bg-gray-100" aria-label="Close details">
@@ -95,7 +96,6 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
             </button>
           </div>
           
-          {/* Content */}
           <div className="flex-grow overflow-y-auto p-6">
             <div className="flex flex-col items-center sm:flex-row sm:items-start sm:space-x-6">
               <div className="mb-4 w-40 flex-shrink-0 sm:mb-0">
@@ -112,17 +112,13 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
               </div>
             </div>
 
-            {/* Progress Section */}
             {book.status === 'reading' && (
               <div className="mt-8">
                 <h3 className="text-lg font-semibold text-gray-800">My Progress</h3>
                 <div className="mt-2 flex items-center gap-4">
                     <span className="text-sm font-medium text-gray-600">{book.progress_percentage || 0}%</span>
                     <div className="h-2 w-full rounded-full bg-gray-200">
-                      <div
-                        className="h-2 rounded-full bg-green-600"
-                        style={{ width: `${book.progress_percentage || 0}%` }}
-                      />
+                      <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${book.progress_percentage || 0}%` }}/>
                     </div>
                 </div>
               </div>
@@ -130,37 +126,17 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
             
             <div className="mt-8">
               <h3 className="text-lg font-semibold text-gray-800">Description</h3>
-              <p className="mt-2 text-base text-gray-700 leading-relaxed">
-                {book.description || 'No description available for this book.'}
-              </p>
+              <p className="mt-2 text-base text-gray-700 leading-relaxed">{book.description || 'No description available for this book.'}</p>
             </div>
           </div>
 
-          {/* Footer Actions */}
           <div className="border-t p-4 space-y-3">
-             {/* SYNTH-STACK: "Read Now" is the new primary action */}
-             <Button className="w-full" onClick={handleReadNow}>
-                Read Now
-             </Button>
+             <Button className="w-full" onClick={handleReadNow}>Read Now</Button>
             
-             {book.status === 'to_read' && (
-                <Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
-                    Move to &ldquoCurrently Reading&ldquo
-                </Button>
-            )}
-             {book.status === 'reading' && (
-                <Button className="w-full" onClick={() => handleStatusChange('finished')} disabled={isPending}>
-                    Mark as Finished
-                </Button>
-            )}
-             {book.status === 'finished' && (
-                <Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>
-                    Read Again
-                </Button>
-            )}
-             <Button variant="outline" className="w-full" onClick={() => handleStatusChange('abandoned')} disabled={isPending}>
-                Move to Abandoned
-             </Button>
+             {book.status === 'to_read' && (<Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>Move to "Currently Reading"</Button>)}
+             {book.status === 'reading' && (<Button className="w-full" onClick={() => handleStatusChange('finished')} disabled={isPending}>Mark as Finished</Button>)}
+             {book.status === 'finished' && (<Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>Read Again</Button>)}
+             <Button variant="outline" className="w-full" onClick={() => handleStatusChange('abandoned')} disabled={isPending}>Move to Abandoned</Button>
           </div>
         </div>
       )}
