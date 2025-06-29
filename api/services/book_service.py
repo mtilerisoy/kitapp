@@ -95,16 +95,17 @@ def get_user_library(user_id: UUID) -> Optional[Dict[str, List[Dict[str, Any]]]]
             'abandoned': [],
         }
 
-        for item in all_books:
-            status = item.get('status')
-            book_data = item.get('book')
-            if status and book_data: # Ensure the data is valid
-                # Add progress info to the book object itself for easier frontend use
-                book_data['status'] = status
-                book_data['progress_percentage'] = item.get('progress_percentage')
-                library.get(status, []).append(book_data)
+        # The data comes from repo already flattened, so just need to group it.
+        for book in all_books:
+            status = book.get('status')
+            if status:
+                library.get(status, []).append(book)
         
         return library
+
+    except Exception as e:
+        logger.error(f"Unexpected error in get_user_library service: {e}")
+        return None
 
     except Exception as e:
         logger.error(f"Unexpected error in get_user_library service: {e}")
