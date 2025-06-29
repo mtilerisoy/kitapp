@@ -66,3 +66,45 @@ def add_book_to_user_library(user_id: UUID, book_id: UUID) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Unexpected error in add_book_to_user_library service: {e}")
         return {"success": False, "status_code": 500, "message": "An unexpected server error occurred."}
+    
+def get_user_library(user_id: UUID) -> Optional[Dict[str, List[Dict[str, Any]]]]:
+    """
+    Retrieves and organizes all books in a user's library by their reading status.
+
+    Args:
+        user_id: The ID of the authenticated user.
+
+    Returns:
+        A dictionary with keys 'reading', 'to_read', 'finished' each containing a list of books,
+        or None if an error occurs.
+    """
+    try:
+        supabase_client = get_supabase_client()
+        progress_repo = UserReadingProgressRepository(supabase_client)
+
+        all_books = progress_repo.fetch_books_for_user(user_id)
+        if all_books is None: # Check for a repository-level error
+            return None
+
+        # Initialize the structure for the response
+        library = {
+            'reading': [],
+            'to_read': [],
+            'finished': [],
+            'abandoned': [],
+        }
+
+        for item in all_books:
+            status = item.get('status')
+            book_data = item.get('book')
+            if status and book_data: # Ensure the data is valid
+                # Add progress info to the book object itself for easier frontend use
+                book_data['status'] = status
+                book_data['progress_percentage'] = item.get('progress_percentage')
+                library.get(status, []).append(book_data)
+        
+        return library
+
+    except Exception as e:
+        logger.error(f"Unexpected error in get_user_library service: {e}")
+        return None

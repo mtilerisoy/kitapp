@@ -1,6 +1,6 @@
 # api/db/repositories/user_reading_progress_repository.py
 
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 from .base_repository import BaseRepository
 from psycopg2 import errors
@@ -50,3 +50,45 @@ class UserReadingProgressRepository(BaseRepository):
                 return {"error": "already_exists"}
             # For other errors, use the generic handler
             return self._handle_supabase_error(e, f"add_book_for_user (user_id={user_id}, book_id={book_id})")
+    
+    def fetch_books_for_user(self, user_id: UUID) -> Optional[List[Dict[str, Any]]]:
+        """
+        Fetches all books in a user's library, joining with the books table
+        to get full book details.
+
+        Args:
+            user_id: The ID of the user.
+
+        Returns:
+            A list of dictionaries, where each dict contains progress info
+            and nested book details, or None on error.
+        """
+        if not self.client:
+            self.logger.error("Supabase client is not initialized.")
+            return None
+
+        try:
+            # The query joins user_reading_progress with books on book_id
+            # and filters by the current user_id.
+            # The select statement specifies the structure we want.
+            data, count = self.client.table(self.table_name)\
+                .select("""
+                    status,
+                    progress_percentage,
+                    book:books (
+                        id,
+                        title,
+                        author,
+                        cover_image_url
+                    )
+                """)\
+                .eq('user_id', str(user_id))\
+                .order('last_progress_update_at', desc=True)\
+                .execute()
+            
+            records = data[1] if data and len(data) > 1 else []
+            self.logger.info(f"Fetched {len(records)} books for user '{str(user_id)[:8]}'.")
+            return records
+            
+        except Exception as e:
+            return self._handle_supabase_error(e, f"fetch_books_for_user (user_id={user_id})")
