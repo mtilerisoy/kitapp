@@ -68,27 +68,40 @@ def register_home_routes(app):
             logger.error(f"Error fetching books: {str(e)}")
             return jsonify({"error": "Internal server error fetching books"}), 500
     
-    @app.route('/api/my-books', methods=['POST'])
+    @app.route('/api/my-books', methods=['GET', 'POST'])
     @login_required
-    def add_to_my_books():
-        logger.debug("Add to my books route accessed")
+    def my_books():
+        user_id = g.user_id # Guaranteed to exist by @login_required
+
+        if request.method == 'POST':
+            logger.debug("POST /api/my-books route accessed")
+            data = request.get_json()
+            if not data or 'book_id' not in data:
+                return jsonify({"error": "book_id is required."}), 400
+
+            try:
+                book_id = UUID(data['book_id'])
+            except (ValueError, TypeError):
+                return jsonify({"error": "Invalid book_id format."}), 400
+
+            result = book_service.add_book_to_user_library(user_id=user_id, book_id=book_id)
+
+            if result["success"]:
+                return jsonify(result["data"]), result["status_code"]
+            else:
+                return jsonify({"error": result["message"]}), result["status_code"]
         
-        data = request.get_json()
-        if not data or 'book_id' not in data:
-            return jsonify({"error": "book_id is required."}), 400
-
-        try:
-            book_id = UUID(data['book_id'])
-            user_id = g.user_id # Guaranteed to exist by @login_required
-        except (ValueError, TypeError):
-            return jsonify({"error": "Invalid book_id format."}), 400
-
-        result = book_service.add_book_to_user_library(user_id=user_id, book_id=book_id)
-
-        if result["success"]:
-            return jsonify(result["data"]), result["status_code"]
-        else:
-            return jsonify({"error": result["message"]}), result["status_code"]
+        if request.method == 'GET':
+            logger.debug("GET /api/my-books route accessed")
+            try:
+                library_data = book_service.get_user_library(user_id)
+                if library_data is not None:
+                    return jsonify(library_data), 200
+                else:
+                    return jsonify({"error": "Failed to retrieve user library."}), 500
+            except Exception as e:
+                logger.error(f"Error fetching user library: {e}")
+                return jsonify({"error": "Internal server error."}), 500
     
     @app.route('/api/books', methods=['POST'])
     def create_book():
