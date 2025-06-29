@@ -56,7 +56,7 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
   const isOpen = !!book;
 
   // SYNTH-STACK FIX: Properly type the useMutation hook generics
-  const { mutate, isPending } = useMutation<any, AxiosError<ApiError>, UpdatePayload>({
+  const { mutate, isPending } = useMutation<void, AxiosError<ApiError>, UpdatePayload>({
     mutationFn: updateBookProgress,
     onSuccess: () => {
       toast.success(`"${book?.title}" has been updated.`);
@@ -133,7 +133,7 @@ export const LibraryBookSidebar: React.FC<LibraryBookSidebarProps> = ({ book, on
           <div className="border-t p-4 space-y-3">
              <Button className="w-full" onClick={handleReadNow}>Read Now</Button>
             
-             {book.status === 'to_read' && (<Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>Move to "Currently Reading"</Button>)}
+             {book.status === 'to_read' && (<Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>Move to &ldquoCurrently Reading&ldquo</Button>)}
              {book.status === 'reading' && (<Button className="w-full" onClick={() => handleStatusChange('finished')} disabled={isPending}>Mark as Finished</Button>)}
              {book.status === 'finished' && (<Button variant="outline" className="w-full" onClick={() => handleStatusChange('reading')} disabled={isPending}>Read Again</Button>)}
              <Button variant="outline" className="w-full" onClick={() => handleStatusChange('abandoned')} disabled={isPending}>Move to Abandoned</Button>

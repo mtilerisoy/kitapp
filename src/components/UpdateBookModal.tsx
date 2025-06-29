@@ -46,7 +46,7 @@ export const UpdateBookModal: React.FC<UpdateBookModalProps> = ({ book, onClose 
   const queryClient = useQueryClient();
 
   // SYNTH-STACK FIX: Properly type the useMutation hook generics
-  const { mutate, isPending } = useMutation<any, AxiosError<ApiError>, UpdatePayload>({
+  const { mutate, isPending } = useMutation<void, AxiosError<ApiError>, UpdatePayload>({
     mutationFn: updateBookProgress,
     onSuccess: () => {
       toast.success(`"${book?.title}" has been updated.`);
