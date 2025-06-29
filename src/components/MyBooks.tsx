@@ -1,113 +1,135 @@
+// src/components/MyBooks.tsx
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react'; // Import useState
 import { useRouter } from 'next/navigation';
-import { useSessionContext } from '@/context/SessionContext'; // Assuming this context provides session info
-import apiClient from '@/api'; // Your configured Axios instance
+import { useSessionContext } from '@/context/SessionContext';
+import apiClient from '@/api';
+import { useQuery } from '@tanstack/react-query';
+import LoadingIndicator from '@/components/LoadingIndicator';
+import LibraryBookCard from '@/components/LibraryBookCard';
+import { Book } from '@/types';
+import { UpdateBookModal } from './UpdateBookModal'; // Import the modal
+
+// Define a stricter type for books in our library
+type ReadingStatus = 'to_read' | 'reading' | 'finished' | 'abandoned';
+interface LibraryBook extends Book {
+  status: ReadingStatus;
+  progress_percentage: number | null;
+}
+
+// Update the LibraryData interface to use the stricter type
+interface LibraryData {
+  reading: LibraryBook[];
+  to_read: LibraryBook[];
+  finished: LibraryBook[];
+  abandoned: LibraryBook[];
+}
+
+const fetchMyLibrary = async (): Promise<LibraryData> => {
+  const { data } = await apiClient.get('/api/my-books');
+  return data;
+};
+
+// Update the props for BookShelf
+const BookShelf = ({ title, books, onBookClick }: { title: string; books: LibraryBook[]; onBookClick: (book: LibraryBook) => void; }) => {
+  if (books.length === 0) return null;
+
+  return (
+    <section className="mb-12">
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900 border-b pb-2 mb-6">
+        {title}
+      </h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
+        {books.map((book) => (
+          <LibraryBookCard
+            key={book.id}
+            book={book}
+            onClick={() => onBookClick(book)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};
 
 const MyBooks: React.FC = () => {
-  const { session, loading } = useSessionContext();
+  const { session, loading: sessionLoading } = useSessionContext();
   const router = useRouter();
-  const [bookTitle, setBookTitle] = useState<string>('');
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [message, setMessage] = useState<string | null>(null);
+  // State for managing the modal
+  const [selectedBook, setSelectedBook] = useState<LibraryBook | null>(null);
 
-  useEffect(() => {
-    // If session loading is complete and there's no session, redirect to login
-    if (!loading && !session) {
+  const { data: library, isLoading: libraryLoading, isError, error } = useQuery<LibraryData, Error>({
+    queryKey: ['my-books'],
+    queryFn: fetchMyLibrary,
+    enabled: !!session,
+  });
+
+  React.useEffect(() => {
+    if (!sessionLoading && !session) {
       router.push('/login');
     }
-  }, [session, loading, router]);
-
-  const handleSaveBook = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bookTitle.trim()) {
-      setMessage('Please enter a book title.');
-      return;
-    }
-
-    setIsSaving(true);
-    setMessage(null);
-
-    try {
-      // Assume your backend endpoint for adding a book is /api/books
-      // and it expects a POST request with { title: "Book Title" }
-      const response = await apiClient.post('/api/books', { title: bookTitle });
-
-      if (response.status === 201 || response.status === 200) { // 201 Created or 200 OK
-        setMessage(`Book "${bookTitle}" saved successfully!`);
-        setBookTitle(''); // Clear the input field
-      } else {
-        // Handle other successful statuses if necessary
-        setMessage(`Book saved, but received status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Error saving book:', error);
-      if (typeof error === 'object' && error !== null && 'response' in error) {
-        const err = error as { response: { data: { message?: string } }; request?: unknown; message?: string };
-        setMessage(`Error: ${err.response.data.message || 'Could not save the book.'}`);
-      } else if (typeof error === 'object' && error !== null && 'request' in error) {
-        setMessage('Error: No response from the server. Please try again.');
-      } else if (typeof error === 'object' && error !== null && 'message' in error) {
-        const err = error as { message?: string };
-        setMessage(`Error: ${err.message || 'An unexpected error occurred.'}`);
-      } else {
-        setMessage('An unexpected error occurred.');
-      }
-    } finally {
-      setIsSaving(false);
-    }
+  }, [session, sessionLoading, router]);
+  
+  const handleBookClick = (book: LibraryBook) => {
+    setSelectedBook(book);
+  };
+  
+  const handleCloseModal = () => {
+    setSelectedBook(null);
   };
 
-  // If session is still loading, show a loading state or nothing
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen"><p>Loading dashboard...</p></div>;
-  }
-
-  // If there's no session (even after loading), this part might not be reached due to redirect,
-  // but it's good for robustness or if redirect logic changes.
-  if (!session) {
-    return <div className="flex justify-center items-center h-screen"><p>Redirecting to login...</p></div>;
-  }
-
-  // User is logged in, show the dashboard content
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">My Dashboard</h1>
-      <p className="text-gray-600 mb-4">Welcome, {session.user?.email || 'User'}!</p>
-
-      <div className="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Add a New Book</h2>
-        <form onSubmit={handleSaveBook}>
-          <div className="mb-4">
-            <label htmlFor="bookTitle" className="block text-sm font-medium text-gray-700 mb-1">
-              Book Title
-            </label>
-            <input
-              type="text"
-              id="bookTitle"
-              value={bookTitle}
-              onChange={(e) => setBookTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
-              placeholder="e.g., The Great Gatsby"
-              disabled={isSaving}
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition-colors disabled:opacity-50"
-            disabled={isSaving || !bookTitle.trim()}
-          >
-            {isSaving ? 'Saving...' : 'Save Book'}
-          </button>
-        </form>
-        {message && (
-          <p className={`mt-4 text-sm ${message.startsWith('Error:') ? 'text-red-600' : 'text-green-600'}`}>
-            {message}
-          </p>
-        )}
+  if (sessionLoading || (libraryLoading && session)) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <LoadingIndicator size={50} />
       </div>
-    </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 bg-red-50 text-red-700 p-4 rounded-lg">
+        <h2 className="text-xl font-bold mb-2">Failed to load your library</h2>
+        <p>{error?.message || 'An unexpected error occurred.'}</p>
+      </div>
+    );
+  }
+
+  const isEmpty = !library || (library.reading.length === 0 && library.to_read.length === 0 && library.finished.length === 0);
+
+  if (isEmpty) {
+    // ... (empty state component remains the same) ...
+     return (
+      <div className="text-center py-20">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Your Library is Empty</h1>
+        <p className="text-gray-600 mb-6">
+          Add some books from the Discover page to get started.
+        </p>
+        <button
+          onClick={() => router.push('/discover')}
+          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105"
+        >
+          Discover Books
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold text-gray-800 mb-10">My Library</h1>
+        
+        <BookShelf title="Currently Reading" books={library?.reading || []} onBookClick={handleBookClick} />
+        <BookShelf title="Up Next" books={library?.to_read || []} onBookClick={handleBookClick} />
+        <BookShelf title="Finished" books={library?.finished || []} onBookClick={handleBookClick} />
+        <BookShelf title="Abandoned" books={library?.abandoned || []} onBookClick={handleBookClick} />
+      </div>
+
+      <UpdateBookModal book={selectedBook} onClose={handleCloseModal} />
+    </>
   );
 };
 
