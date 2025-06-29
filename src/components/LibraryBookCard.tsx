@@ -3,11 +3,15 @@
 'use client';
 
 import React from 'react';
-// SYNTH-STACK: Import the specific LibraryBook type
-import { LibraryBook } from '@/types';
+import { Book } from '@/types';
 import { cn } from '@/lib/utils';
 
-// SYNTH-STACK: Update the props to use the imported type
+// We need to extend the Book type slightly for this card's props
+interface LibraryBook extends Omit<Book, 'is_in_library'> {
+  status: string;
+  progress_percentage: number | null;
+}
+
 interface LibraryBookCardProps {
   book: LibraryBook;
   onClick: () => void;
