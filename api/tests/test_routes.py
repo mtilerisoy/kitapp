@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 
 # Helper for auth headers
-def auth_headers(jwt="test-jwt", refresh_token="test-refresh"):
+def auth_headers(jwt="test-jwt", refresh_token="dummy-refresh-token"):  # nosec
     return {"Authorization": f"Bearer {jwt}", "refresh-token": refresh_token}
 
 
