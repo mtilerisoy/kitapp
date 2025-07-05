@@ -1,5 +1,6 @@
 import pytest
 from api.index import app as flask_app
+import os
 
 
 @pytest.fixture(scope="module")
@@ -23,3 +24,7 @@ def mock_supabase(monkeypatch):
         "api.db.supabase_client.get_supabase_admin_client", lambda *args, **kwargs: None
     )
     yield
+
+
+os.environ.setdefault("NEXT_PUBLIC_SUPABASE_URL", "http://dummy-url")
+os.environ.setdefault("NEXT_PUBLIC_SUPABASE_ANON_KEY", "dummy-key")
