@@ -1,5 +1,4 @@
 from api.db.supabase_client import get_supabase_client
-from api.db.repositories.books_repository import BooksRepository
 from api.utils.logger_config import logger
 from typing import Optional, List, Dict, Any
 from api.db.repositories.user_reading_progress_repository import (

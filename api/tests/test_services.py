@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock
 from api.services import book_service, categories_service
 

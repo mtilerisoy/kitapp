@@ -1,11 +1,4 @@
-import os
-import uuid
-import threading
-import requests
-
-from typing import Optional, Dict
 from dotenv import load_dotenv
-from uuid import UUID
 
 
 from api.db.supabase_client import get_supabase_client

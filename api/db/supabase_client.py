@@ -1,7 +1,6 @@
 # api/db/supabase_client.py
 
 import os
-from uuid import UUID
 
 from flask import g
 from supabase import create_client, Client

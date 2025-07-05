@@ -1,5 +1,3 @@
-import pytest
-from flask import g
 from unittest.mock import patch
 
 
