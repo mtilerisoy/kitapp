@@ -1,6 +1,7 @@
 # api/db/supabase_client.py
 
 import os
+from typing import Optional
 
 from flask import g
 from supabase import create_client, Client
@@ -15,9 +16,10 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     logger.error("Supabase URL or Anon Key not found in environment variables.")
+    raise ValueError("Supabase URL or Anon Key not found in environment variables.")
 
 
-def get_supabase_client(user_jwt: str = None, refresh_token: str = None) -> Client:
+def get_supabase_client(user_jwt: Optional[str] = None, refresh_token: Optional[str] = None) -> Client:
 
     try:
         supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
