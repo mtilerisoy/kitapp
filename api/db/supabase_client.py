@@ -19,7 +19,9 @@ if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise ValueError("Supabase URL or Anon Key not found in environment variables.")
 
 
-def get_supabase_client(user_jwt: Optional[str] = None, refresh_token: Optional[str] = None) -> Client:
+def get_supabase_client(
+    user_jwt: Optional[str] = None, refresh_token: Optional[str] = None
+) -> Client:
 
     try:
         supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)

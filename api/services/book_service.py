@@ -103,14 +103,14 @@ def get_user_library(user_id: UUID) -> Optional[Dict[str, List[Dict[str, Any]]]]
             return None
         # Initialize the structure for the response
         library: Dict[str, List[Dict[str, Any]]] = {
-            'reading': [],
-            'to_read': [],
-            'finished': [],
-            'abandoned': [],
+            "reading": [],
+            "to_read": [],
+            "finished": [],
+            "abandoned": [],
         }
         # The data comes from repo already flattened, so just need to group it.
         for book in all_books:
-            status = book.get('status')
+            status = book.get("status")
             if status:
                 library.get(status, []).append(book)
         return library
@@ -148,21 +148,31 @@ def update_user_book_progress(
     now = datetime.now(timezone.utc).isoformat()
 
     if status:
-        valid_statuses = ['to_read', 'reading', 'finished', 'abandoned']
+        valid_statuses = ["to_read", "reading", "finished", "abandoned"]
         if status not in valid_statuses:
-            return {"success": False, "status_code": 400, "message": f"Invalid status. Must be one of {valid_statuses}."}
-        updates['status'] = status
+            return {
+                "success": False,
+                "status_code": 400,
+                "message": f"Invalid status. Must be one of {valid_statuses}.",
+            }
+        updates["status"] = status
         # Business logic for timestamps
-        if status == 'reading':
-            updates['started_reading_at'] = now
-        elif status == 'finished':
-            updates['finished_reading_at'] = now
-            updates['progress_percentage'] = 100  # Automatically set progress to 100% on finish
+        if status == "reading":
+            updates["started_reading_at"] = now
+        elif status == "finished":
+            updates["finished_reading_at"] = now
+            updates["progress_percentage"] = (
+                100  # Automatically set progress to 100% on finish
+            )
 
     if progress is not None:
         if not 0 <= progress <= 100:
-            return {"success": False, "status_code": 400, "message": "Progress must be between 0 and 100."}
-        updates['progress_percentage'] = progress
+            return {
+                "success": False,
+                "status_code": 400,
+                "message": "Progress must be between 0 and 100.",
+            }
+        updates["progress_percentage"] = progress
 
     # Always update the last interaction timestamp
     updates["last_progress_update_at"] = now
