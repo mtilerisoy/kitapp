@@ -70,11 +70,10 @@ def get_supabase_admin_client() -> Client:
             "SUPABASE_SERVICE_ROLE_KEY is not configured. Cannot create admin client."
         )
         raise ValueError("Service role key is not configured.")
-    
+
     if not SUPABASE_URL or not SUPABASE_ANON_KEY:
         logger.error("Supabase URL or Anon Key not found in environment variables.")
         raise ValueError("Supabase URL or Anon Key not found in environment variables.")
-
 
     try:
         supabase_admin_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
