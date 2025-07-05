@@ -22,10 +22,9 @@ def get_categories():
     Fetches all categories from the database.
     Returns a dictionary with categories or None if an error occurs.
     """
-    supabase_client = get_supabase_client()
-    categories_repo = Categories(supabase_client)
-
     try:
+        supabase_client = get_supabase_client()
+        categories_repo = Categories(supabase_client)
         data = categories_repo.fetch_all()
         if data:
             logger.info(f"Fetched {len(data[1])} categories.")
