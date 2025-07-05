@@ -1,3 +1,5 @@
+from flask import Flask
+
 from api.utils.authentication import auth_context_processor
 from api.routes.home_routes import register_home_routes
 
