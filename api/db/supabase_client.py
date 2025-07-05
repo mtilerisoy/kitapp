@@ -32,19 +32,28 @@ def get_supabase_client(user_jwt: str = None, refresh_token: str = None) -> Clie
                 refresh_token = g.get("refresh_token", None)
 
         except RuntimeError:
-            logger.warning("Flask g context not available. User JWT and refresh token will not be set.")
+            logger.warning(
+                "Flask g context not available. User JWT and refresh token will not be set."
+            )
 
         if user_jwt and refresh_token:
-            supabase_client.auth.set_session(access_token=user_jwt, refresh_token=refresh_token)
-            logger.info("Supabase client authenticated with user JWT and refresh token.")
+            supabase_client.auth.set_session(
+                access_token=user_jwt, refresh_token=refresh_token
+            )
+            logger.info(
+                "Supabase client authenticated with user JWT and refresh token."
+            )
         else:
-            logger.info("No user JWT found. Supabase client created without authentication.")
+            logger.info(
+                "No user JWT found. Supabase client created without authentication."
+            )
 
         return supabase_client
 
     except Exception as e:
         logger.error(f"Error creating Supabase client: {e}")
         raise
+
 
 def get_supabase_admin_client() -> Client:
     """
@@ -54,9 +63,11 @@ def get_supabase_admin_client() -> Client:
     or performing administrative tasks.
     """
     if not SUPABASE_SERVICE_KEY:
-        logger.error("SUPABASE_SERVICE_ROLE_KEY is not configured. Cannot create admin client.")
+        logger.error(
+            "SUPABASE_SERVICE_ROLE_KEY is not configured. Cannot create admin client."
+        )
         raise ValueError("Service role key is not configured.")
-        
+
     try:
         supabase_admin_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
         logger.info("Supabase admin client created successfully.")

@@ -8,6 +8,8 @@ class BaseRepository:
         self.logger = logger
 
     def _handle_supabase_error(self, error, operation: str):
-        self.logger.error(f"Supabase {operation} on table {self.table_name} error: {error}")
+        self.logger.error(
+            f"Supabase {operation} on table {self.table_name} error: {error}"
+        )
 
         return None

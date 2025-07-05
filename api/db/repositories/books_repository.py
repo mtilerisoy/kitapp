@@ -6,7 +6,9 @@ class BooksRepository(BaseRepository):
     def __init__(self, db_client):
         super().__init__("books", db_client)
 
-    def fetch_paginated_books(self, page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
+    def fetch_paginated_books(
+        self, page: int, limit: int
+    ) -> Optional[List[Dict[str, Any]]]:
         """
         Fetches a paginated list of books.
 
@@ -27,10 +29,12 @@ class BooksRepository(BaseRepository):
             offset = (page - 1) * limit
 
             # SYNTH-STACK UPDATE: Added 'description' and 'total_pages' to the select query.
-            query = self.client.table(self.table_name)\
-                .select("id, title, author, cover_image_url, description, total_pages")\
-                .order("created_at", desc=True)\
+            query = (
+                self.client.table(self.table_name)
+                .select("id, title, author, cover_image_url, description, total_pages")
+                .order("created_at", desc=True)
                 .range(offset, offset + limit - 1)
+            )
 
             data, count = query.execute()
 
@@ -38,11 +42,15 @@ class BooksRepository(BaseRepository):
             records = data[1] if data and len(data) > 1 else []
 
             if records:
-                self.logger.info(f"Retrieved {len(records)} books for page {page} with limit {limit}.")
+                self.logger.info(
+                    f"Retrieved {len(records)} books for page {page} with limit {limit}."
+                )
             else:
                 self.logger.info(f"No books found for page {page} with limit {limit}.")
 
             return records
 
         except Exception as e:
-            return self._handle_supabase_error(e, f"fetch_paginated_books (page={page}, limit={limit})")
+            return self._handle_supabase_error(
+                e, f"fetch_paginated_books (page={page}, limit={limit})"
+            )

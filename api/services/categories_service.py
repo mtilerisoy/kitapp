@@ -17,6 +17,7 @@ from api.utils.logger_config import logger
 
 load_dotenv()
 
+
 def get_categories():
     """
     Fetches all categories from the database.
@@ -36,6 +37,7 @@ def get_categories():
     except Exception as e:
         logger.error(f"Error fetching categories: {str(e)}")
         return None
+
 
 # def process_job_background_task(job_description_id_str: str):
 #     """

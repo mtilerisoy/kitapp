@@ -11,13 +11,15 @@ class Categories(BaseRepository):
     def fetch_all(self) -> Optional[Dict[str, Any]]:
         """Fetch all available categories."""
         if not self.client:
-            self.logger.error("Supabase client is not initialized. Cannot fetch categories.")
+            self.logger.error(
+                "Supabase client is not initialized. Cannot fetch categories."
+            )
             return None
 
         try:
-            query = self.client.table(self.table_name)\
-                .select("*")\
-                .order("name", desc=False)
+            query = (
+                self.client.table(self.table_name).select("*").order("name", desc=False)
+            )
 
             data, count = query.execute()
 
@@ -36,13 +38,13 @@ class Categories(BaseRepository):
     def get_by_id(self, book_id: UUID) -> Optional[Dict[str, Any]]:
         """Get a job description by its ID."""
         if not self.client:
-            self.logger.error("Supabase client is not initialized. Cannot get job description.")
+            self.logger.error(
+                "Supabase client is not initialized. Cannot get job description."
+            )
             return None
 
         try:
-            query = self.client.table(self.table_name)\
-                .select("*")\
-                .eq("id", book_id)
+            query = self.client.table(self.table_name).select("*").eq("id", book_id)
 
             data, count = query.execute()
 
@@ -59,36 +61,48 @@ class Categories(BaseRepository):
     def update_title(self, book_id: UUID, job_title: str):
         """Update the title of a job description."""
         if not self.client:
-            self.logger.error("Supabase client is not initialized. Cannot update job description title.")
+            self.logger.error(
+                "Supabase client is not initialized. Cannot update job description title."
+            )
             return None
 
         try:
-            query = self.client.table(self.table_name)\
-                .update({"title": job_title})\
+            query = (
+                self.client.table(self.table_name)
+                .update({"title": job_title})
                 .eq("id", book_id)
+            )
 
             data, count = query.execute()
 
             if data and len(data[1]) > 0:
-                self.logger.info(f"Updated job description with ID: {book_id} to title: {job_title}")
+                self.logger.info(
+                    f"Updated job description with ID: {book_id} to title: {job_title}"
+                )
                 return data[1][0]
 
-            self.logger.warning(f"No job description found with ID: {book_id} to update title.")
+            self.logger.warning(
+                f"No job description found with ID: {book_id} to update title."
+            )
             return None
 
         except Exception as e:
             return self._handle_supabase_error(e, f"update_title ({book_id})")
-    
+
     def get_book_details(self) -> Optional[Dict[str, Any]]:
         """Get all job descriptions for the authenticated user."""
         if not self.client:
-            self.logger.error("Supabase client is not initialized. Cannot get job descriptions.")
+            self.logger.error(
+                "Supabase client is not initialized. Cannot get job descriptions."
+            )
             return None
 
         try:
-            query = self.client.table(self.table_name)\
-                .select("*")\
+            query = (
+                self.client.table(self.table_name)
+                .select("*")
                 .order("created_at", desc=True)
+            )
 
             data, count = query.execute()
 

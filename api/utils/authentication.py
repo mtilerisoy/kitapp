@@ -14,6 +14,7 @@ load_dotenv()
 
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
+
 def login_required(func):
     """
     Decorator for routes that require authentication.
@@ -86,10 +87,10 @@ def validate_token_and_get_user_id(token: str) -> Optional[UUID]:
         payload = jwt.decode(
             token,
             SUPABASE_JWT_SECRET,
-            algorithms=['HS256'],
+            algorithms=["HS256"],
             audience="authenticated",
         )
-        user_id = payload.get('sub')
+        user_id = payload.get("sub")
 
         if not user_id:
             logger.warning("User ID (sub claim) not found in token payload.")
@@ -101,7 +102,9 @@ def validate_token_and_get_user_id(token: str) -> Optional[UUID]:
     except ExpiredSignatureError:
         logger.warning("Token has expired.")
         return None
-    except InvalidTokenError as e:  # errors like invalid signature, malformed token etc.
+    except (
+        InvalidTokenError
+    ) as e:  # errors like invalid signature, malformed token etc.
         masked_token = f"{token[:5]}...{token[-5:]}" if len(token) > 10 else token
         logger.warning(f"Invalid token: {e}. Received {masked_token}")
         return None
