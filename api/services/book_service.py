@@ -98,9 +98,11 @@ def get_user_library(user_id: UUID) -> Optional[Dict[str, List[Dict[str, Any]]]]
     try:
         supabase_client = get_supabase_client()
         progress_repo = UserReadingProgressRepository(supabase_client)
+
         all_books = progress_repo.fetch_books_for_user(user_id)
         if all_books is None:  # Check for a repository-level error
             return None
+
         # Initialize the structure for the response
         library: Dict[str, List[Dict[str, Any]]] = {
             "reading": [],
@@ -108,11 +110,13 @@ def get_user_library(user_id: UUID) -> Optional[Dict[str, List[Dict[str, Any]]]]
             "finished": [],
             "abandoned": [],
         }
+
         # The data comes from repo already flattened, so just need to group it.
         for book in all_books:
             status = book.get("status")
             if status:
                 library.get(status, []).append(book)
+
         return library
     except Exception as e:
         logger.error(f"Unexpected error in get_user_library service: {e}")
@@ -156,14 +160,13 @@ def update_user_book_progress(
                 "message": f"Invalid status. Must be one of {valid_statuses}.",
             }
         updates["status"] = status
+
         # Business logic for timestamps
         if status == "reading":
             updates["started_reading_at"] = now
         elif status == "finished":
             updates["finished_reading_at"] = now
-            updates["progress_percentage"] = (
-                100  # Automatically set progress to 100% on finish
-            )
+            updates["progress_percentage"] = 100  # Set to 100% on finish
 
     if progress is not None:
         if not 0 <= progress <= 100:
