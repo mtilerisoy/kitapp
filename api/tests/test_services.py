@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from api.services import book_service, categories_service
-from uuid import UUID
 
 
 @patch("api.services.book_service.get_supabase_client")
