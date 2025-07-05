@@ -1,4 +1,5 @@
 from flask import Flask
+import os
 
 from api.utils.authentication import auth_context_processor
 from api.routes.home_routes import register_home_routes
@@ -10,4 +11,5 @@ app.before_request(auth_context_processor)
 register_home_routes(app)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug_mode)
