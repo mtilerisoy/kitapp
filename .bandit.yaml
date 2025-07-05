@@ -1,0 +1,6 @@
+# .bandit.yaml
+skips:
+  - B101
+  - B107
+exclude_dirs:
+  - api/tests
