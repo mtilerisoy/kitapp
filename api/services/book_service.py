@@ -148,7 +148,7 @@ def update_user_book_progress(
             "message": "Either status or progress must be provided.",
         }
 
-    updates = {}
+    updates: Dict[str, Any] = {}
     now = datetime.now(timezone.utc).isoformat()
 
     if status:
@@ -175,7 +175,7 @@ def update_user_book_progress(
                 "status_code": 400,
                 "message": "Progress must be between 0 and 100.",
             }
-        updates["progress_percentage"] = progress
+        updates["progress_percentage"] = progress  # Always int
 
     # Always update the last interaction timestamp
     updates["last_progress_update_at"] = now
