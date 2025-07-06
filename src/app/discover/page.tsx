@@ -11,11 +11,8 @@ import BookDetailSidebar from '@/components/BookDetailSidebar'; // SYNTH-STACK U
 import { Input } from '@/components/ui/Input';
 
 // The fetcher function now uses the updated Book type
-const fetchBooks = async ({ limit = 20 }): Promise<Book[]> => {
-  // Removed pageParam as it wasn't being used for infinite scroll yet
-  const { data } = await apiClient.get('/api/books', {
-    params: { page: 1, limit },
-  });
+const fetchBooks = async ({ limit = 20 }): Promise<{ books: Book[] }> => {
+  const { data } = await apiClient.get('/api/books', { params: { page: 1, limit } });
   return data;
 };
 
@@ -25,14 +22,16 @@ const DiscoverPage: React.FC = () => {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
   const {
-    data: books,
+    data,
     isLoading,
     isError,
     error,
-  } = useQuery<Book[], Error>({
+  } = useQuery<{ books: Book[] }, Error>({
     queryKey: ['books', { limit }],
     queryFn: () => fetchBooks({ limit }),
   });
+
+  const books = data?.books || [];
 
   return (
     <>

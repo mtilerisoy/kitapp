@@ -16,8 +16,8 @@ interface Category {
   slug: string;
 }
 
-// 2. Create the asynchronous fetcher function. This can be co-located or moved to a dedicated api-hooks file.
-const fetchCategories = async (): Promise<Category[]> => {
+// 2. Create the asynchronous fetcher function.
+const fetchCategories = async (): Promise<{ categories: Category[] }> => {
   const { data } = await apiClient.get('/api/categories');
   return data;
 };
@@ -25,14 +25,16 @@ const fetchCategories = async (): Promise<Category[]> => {
 // 3. The CategoriesPage component, now vastly simplified.
 const CategoriesPage: React.FC = () => {
   const {
-    data: categories,
+    data,
     isLoading,
     isError,
     error,
-  } = useQuery<Category[], Error>({
-    queryKey: ['categories'], // A unique key for caching this query
+  } = useQuery<{ categories: Category[] }, Error>({
+    queryKey: ['categories'],
     queryFn: fetchCategories,
   });
+
+  const categories = data?.categories || [];
 
   // 4. Render a localized loading state
   if (isLoading) {

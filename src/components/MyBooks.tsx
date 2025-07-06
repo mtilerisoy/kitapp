@@ -32,7 +32,7 @@ interface LibraryData {
   abandoned: LibraryBook[];
 }
 
-const fetchMyLibrary = async (): Promise<LibraryData> => {
+const fetchMyLibrary = async (): Promise<{ library: LibraryData }> => {
   const { data } = await apiClient.get('/api/my-books');
   return data;
 };
@@ -56,11 +56,13 @@ const MyBooks: React.FC = () => {
   const router = useRouter();
   const [selectedBook, setSelectedBook] = useState<LibraryBook | null>(null);
 
-  const { data: library, isLoading: libraryLoading, isError, error } = useQuery<LibraryData, Error>({
+  const { data, isLoading: libraryLoading, isError, error } = useQuery<{ library: LibraryData }, Error>({
     queryKey: ['my-books'],
     queryFn: fetchMyLibrary,
     enabled: !!session,
   });
+
+  const library = data?.library;
 
   React.useEffect(() => {
     if (!sessionLoading && !session) {
