@@ -35,7 +35,11 @@ def test_me_unauthenticated(client):
 def test_get_categories_success(mock_get, client):
     resp = client.get("/api/categories")
     assert resp.status_code == 200
-    assert isinstance(resp.json, list)
+    assert isinstance(resp.json, dict)
+    assert "categories" in resp.json
+    assert isinstance(resp.json["categories"], list)
+    assert resp.json["categories"] == [{"id": 1, "name": "Fiction"}]
+    assert "request_id" in resp.json
 
 
 @patch(
