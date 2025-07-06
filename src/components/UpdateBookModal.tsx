@@ -26,7 +26,12 @@ interface UpdatePayload {
 
 // SYNTH-STACK FIX: Define the expected API error shape
 interface ApiError {
-  error: string;
+  error: {
+    type: string;
+    message: string;
+    code: string;
+    request_id?: string;
+  };
 }
 
 // Mutation function
@@ -55,8 +60,10 @@ export const UpdateBookModal: React.FC<UpdateBookModalProps> = ({ book, onClose 
     },
     // SYNTH-STACK FIX: Replace 'any' with the specific AxiosError type
     onError: (error) => {
-      const errorMessage = error.response?.data?.error || "Failed to update book.";
-      toast.error(errorMessage);
+      const errorMessage = error.response?.data?.error?.message || "Failed to update book.";
+      const errorCode = error.response?.data?.error?.code;
+      const requestId = error.response?.data?.error?.request_id;
+      toast.error(`${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ''}${requestId ? ` [Request ID: ${requestId}]` : ''}`);
     },
   });
 

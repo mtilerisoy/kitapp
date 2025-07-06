@@ -76,12 +76,21 @@ const MyBooks: React.FC = () => {
     return <div className="flex justify-center items-center h-96"><LoadingIndicator size={50} /></div>;
   }
 
-  // SYNTH-STACK FIX: Implement a proper error display that uses the 'error' variable.
   if (isError) {
+    let errorMessage = error.message;
+    let errorCode = '';
+    let requestId = '';
+    if ((error as any).response?.data?.error) {
+      errorMessage = (error as any).response.data.error.message || errorMessage;
+      errorCode = (error as any).response.data.error.code || '';
+      requestId = (error as any).response.data.error.request_id || '';
+    }
     return (
       <div className="flex flex-col items-center justify-center h-64 bg-red-50 text-red-700 p-4 rounded-lg">
         <h2 className="text-xl font-bold mb-2">Failed to Load Your Library</h2>
-        <p>{error?.message || 'An unexpected error occurred. Please try refreshing the page.'}</p>
+        <p>{errorMessage}</p>
+        {errorCode && <div className="text-xs mt-2">Code: {errorCode}</div>}
+        {requestId && <div className="text-xs mt-1">Request ID: {requestId}</div>}
       </div>
     );
   }

@@ -23,7 +23,12 @@ interface UserReadingProgress {
 
 // This defines the shape of the error response from our Flask API.
 interface ApiError {
-  error: string;
+  error: {
+    type: string;
+    message: string;
+    code: string;
+    request_id?: string;
+  };
 }
 
 async function addBookToLibrary(bookId: string): Promise<UserReadingProgress> {
@@ -54,8 +59,10 @@ const BookDetailSidebar: React.FC<BookDetailSidebarProps> = ({ book, onClose }) 
       onClose();
     },
     onError: (error) => {
-      const errorMessage = error.response?.data?.error || "An unknown error occurred.";
-      toast.error(errorMessage);
+      const errorMessage = error.response?.data?.error?.message || "An unknown error occurred.";
+      const errorCode = error.response?.data?.error?.code;
+      const requestId = error.response?.data?.error?.request_id;
+      toast.error(`${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ''}${requestId ? ` [Request ID: ${requestId}]` : ''}`);
     }
   });
 

@@ -22,7 +22,12 @@ interface UpdatePayload {
   progress: number;
 }
 interface ApiError {
-  error: string;
+  error: {
+    type: string;
+    message: string;
+    code: string;
+    request_id?: string;
+  };
 }
 
 // --- API Functions (No Changes) ---
@@ -144,7 +149,24 @@ export default function ReaderPage() {
   const prevPage = () => renditionRef.current?.prev();
 
   if (isLoading) return <div className="w-full h-full flex justify-center items-center bg-gray-100"><PacmanLoader color="#36D7B7" size={50} /></div>;
-  if (isError) return <div className="w-full h-full flex justify-center items-center text-red-600 p-8 text-center bg-gray-100">Error: {error.message}</div>;
+  if (isError) {
+    // Try to extract the new error format from AxiosError
+    let errorMessage = error.message;
+    let errorCode = '';
+    let requestId = '';
+    if ((error as any).response?.data?.error) {
+      errorMessage = (error as any).response.data.error.message || errorMessage;
+      errorCode = (error as any).response.data.error.code || '';
+      requestId = (error as any).response.data.error.request_id || '';
+    }
+    return (
+      <div className="w-full h-full flex justify-center items-center text-red-600 p-8 text-center bg-gray-100">
+        Error: {errorMessage}
+        {errorCode && <div className="text-xs mt-2">Code: {errorCode}</div>}
+        {requestId && <div className="text-xs mt-1">Request ID: {requestId}</div>}
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full bg-[#FBF7EE]" onMouseMove={handleMouseMove}>
