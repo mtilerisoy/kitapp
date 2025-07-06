@@ -5,7 +5,6 @@ from api.db.repositories.user_reading_progress_repository import (
     UserReadingProgressRepository,
 )
 from uuid import UUID
-from datetime import datetime, timezone
 from flask import g
 
 
