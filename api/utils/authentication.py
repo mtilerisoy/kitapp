@@ -24,8 +24,22 @@ def login_required(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
         if not g.get("user_id"):
-            logger.warning("Unauthorized access attempt.")
-            return jsonify({"error": "Authentication required"}), 401
+            logger.warning(
+                f"Unauthorized access attempt | Request ID: {getattr(g, 'request_id', None)}"
+            )
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "type": "AuthenticationError",
+                            "message": "Authentication required",
+                            "code": "unauthorized",
+                            "request_id": getattr(g, "request_id", None),
+                        }
+                    }
+                ),
+                401,
+            )
         return func(*args, **kwargs)
 
     return decorated_function
@@ -54,11 +68,15 @@ def get_current_user() -> Optional[UUID]:
     """
     auth_header = request.headers.get("Authorization")
     if not auth_header:
-        logger.warning("Authorization header is missing. No user is authenticated.")
+        logger.warning(
+            f"Authorization header is missing. No user is authenticated. | Request ID: {getattr(g, 'request_id', None)}"
+        )
         return None
 
     if not auth_header.startswith("Bearer "):
-        logger.warning("Invalid authorization header format")
+        logger.warning(
+            f"Invalid authorization header format | Request ID: {getattr(g, 'request_id', None)}"
+        )
         raise ValueError("Invalid authorization header format")
 
     token = auth_header.split(" ")[1]

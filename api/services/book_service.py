@@ -6,6 +6,7 @@ from api.db.repositories.user_reading_progress_repository import (
 )
 from uuid import UUID
 from datetime import datetime, timezone
+from flask import g
 
 
 def get_discover_books(page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
@@ -45,82 +46,95 @@ def get_discover_books(page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
 def add_book_to_user_library(user_id: UUID, book_id: UUID) -> Dict[str, Any]:
     """
     Service layer logic to add a book to a user's library.
-
-    Args:
-        user_id: The ID of the authenticated user.
-        book_id: The ID of the book to add.
-
-    Returns:
-        A dictionary indicating the result of the operation.
+    Returns a dict with standardized error format on failure.
     """
     try:
         supabase_client = get_supabase_client()
         progress_repo = UserReadingProgressRepository(supabase_client)
-
         result = progress_repo.add_book_for_user(user_id, book_id)
-
         if result is None:
             return {
                 "success": False,
                 "status_code": 500,
                 "message": "An internal error occurred.",
+                "error": {
+                    "type": "ServiceError",
+                    "message": "An internal error occurred.",
+                    "code": "add_book_error",
+                    "request_id": getattr(g, "request_id", None),
+                },
             }
-
         if result.get("error") == "already_exists":
             return {
                 "success": False,
                 "status_code": 409,
                 "message": "This book is already in your library.",
+                "error": {
+                    "type": "ConflictError",
+                    "message": "This book is already in your library.",
+                    "code": "already_exists",
+                    "request_id": getattr(g, "request_id", None),
+                },
             }
-
         return {"success": True, "status_code": 201, "data": result}
-
     except Exception as e:
-        logger.error(f"Unexpected error in add_book_to_user_library service: {e}")
+        logger.error(
+            f"Unexpected error in add_book_to_user_library service: {e} | Request ID: {getattr(g, 'request_id', None)}"
+        )
         return {
             "success": False,
             "status_code": 500,
             "message": "An unexpected server error occurred.",
+            "error": {
+                "type": "InternalServerError",
+                "message": "An unexpected server error occurred.",
+                "code": "internal_error",
+                "request_id": getattr(g, "request_id", None),
+            },
         }
 
 
 def get_user_library(user_id: UUID) -> Optional[Dict[str, List[Dict[str, Any]]]]:
     """
     Retrieves and organizes all books in a user's library by their reading status.
-
-    Args:
-        user_id: The ID of the authenticated user.
-
-    Returns:
-        A dictionary with keys 'reading', 'to_read', 'finished' each containing a list of books,
-        or None if an error occurs.
+    Returns None or a dict with standardized error format on failure.
     """
     try:
         supabase_client = get_supabase_client()
         progress_repo = UserReadingProgressRepository(supabase_client)
-
         all_books = progress_repo.fetch_books_for_user(user_id)
-        if all_books is None:  # Check for a repository-level error
-            return None
-
-        # Initialize the structure for the response
+        if all_books is None:
+            return {
+                "error": {
+                    "type": "ServiceError",
+                    "message": "Failed to retrieve user library.",
+                    "code": "get_library_error",
+                    "request_id": getattr(g, "request_id", None),
+                }
+            }
         library: Dict[str, List[Dict[str, Any]]] = {
             "reading": [],
             "to_read": [],
             "finished": [],
             "abandoned": [],
         }
-
-        # The data comes from repo already flattened, so just need to group it.
         for book in all_books:
             status = book.get("status")
             if status:
                 library.get(status, []).append(book)
-
         return library
     except Exception as e:
-        logger.error(f"Unexpected error in get_user_library service: {e}")
-        return None
+        logger.error(
+            f"Unexpected error in get_user_library service: {e} | Request ID: {getattr(g, 'request_id', None)}"
+        )
+        return {
+            "error": {
+                "type": "InternalServerError",
+                "message": "An unexpected server error occurred.",
+                "code": "internal_error",
+                "request_id": getattr(g, "request_id", None),
+            }
+        }
 
 
 def update_user_book_progress(
@@ -130,61 +144,18 @@ def update_user_book_progress(
     progress: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
-    Service layer logic to update book progress, handling business rules.
-
-    Args:
-        user_id: The ID of the authenticated user.
-        book_id: The ID of the book to update.
-        status: The new reading status.
-        progress: The new progress percentage.
-
-    Returns:
-        A dictionary indicating the result of the operation.
+    Updates a user's reading progress for a specific book.
+    Returns a dict with standardized error format on failure.
     """
-    if status is None and progress is None:
-        return {
-            "success": False,
-            "status_code": 400,
-            "message": "Either status or progress must be provided.",
-        }
-
-    updates: Dict[str, Any] = {}
-    now = datetime.now(timezone.utc).isoformat()
-
-    if status:
-        valid_statuses = ["to_read", "reading", "finished", "abandoned"]
-        if status not in valid_statuses:
-            return {
-                "success": False,
-                "status_code": 400,
-                "message": f"Invalid status. Must be one of {valid_statuses}.",
-            }
-        updates["status"] = status
-
-        # Business logic for timestamps
-        if status == "reading":
-            updates["started_reading_at"] = now
-        elif status == "finished":
-            updates["finished_reading_at"] = now
-            updates["progress_percentage"] = 100  # Set to 100% on finish
-
-    if progress is not None:
-        if not 0 <= progress <= 100:
-            return {
-                "success": False,
-                "status_code": 400,
-                "message": "Progress must be between 0 and 100.",
-            }
-        updates["progress_percentage"] = progress  # Always int
-
-    # Always update the last interaction timestamp
-    updates["last_progress_update_at"] = now
-
     try:
         supabase_client = get_supabase_client()
         progress_repo = UserReadingProgressRepository(supabase_client)
+        updates = {}
+        if status is not None:
+            updates["status"] = status
+        if progress is not None:
+            updates["progress_percentage"] = progress
         result = progress_repo.update_book_progress(user_id, book_id, updates)
-
         if result:
             return {"success": True, "status_code": 200, "data": result}
         else:
@@ -192,12 +163,25 @@ def update_user_book_progress(
                 "success": False,
                 "status_code": 404,
                 "message": "Book not found in your library.",
+                "error": {
+                    "type": "NotFoundError",
+                    "message": "Book not found in your library.",
+                    "code": "book_not_found",
+                    "request_id": getattr(g, "request_id", None),
+                },
             }
-
     except Exception as e:
-        logger.error(f"Unexpected error in update_user_book_progress service: {e}")
+        logger.error(
+            f"Unexpected error in update_user_book_progress service: {e} | Request ID: {getattr(g, 'request_id', None)}"
+        )
         return {
             "success": False,
             "status_code": 500,
             "message": "An unexpected server error occurred.",
+            "error": {
+                "type": "InternalServerError",
+                "message": "An unexpected server error occurred.",
+                "code": "internal_error",
+                "request_id": getattr(g, "request_id", None),
+            },
         }
