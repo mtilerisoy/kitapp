@@ -41,9 +41,7 @@ class UsersRepository(BaseRepository):
                 )
                 return data  # Return the first (and only) record
 
-            self.logger.warning(
-                f"User not found: {user_id}"
-            )
+            self.logger.warning(f"User not found: {user_id}")
             return None
 
         except Exception as e:
@@ -52,11 +50,11 @@ class UsersRepository(BaseRepository):
             )
 
     def update_user_subscription(
-        self, 
-        user_id: UUID, 
+        self,
+        user_id: UUID,
         subscription_status: str,
         stripe_customer_id: Optional[str] = None,
-        stripe_subscription_id: Optional[str] = None
+        stripe_subscription_id: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Updates a user's subscription status and Stripe information.
@@ -77,12 +75,12 @@ class UsersRepository(BaseRepository):
         try:
             update_data = {
                 "subscription_status": subscription_status,
-                "subscription_updated_at": "now()"
+                "subscription_updated_at": "now()",
             }
 
             if stripe_customer_id:
                 update_data["stripe_customer_id"] = stripe_customer_id
-            
+
             if stripe_subscription_id:
                 update_data["stripe_subscription_id"] = stripe_subscription_id
 
@@ -99,9 +97,7 @@ class UsersRepository(BaseRepository):
                 )
                 return data[1][0]
 
-            self.logger.warning(
-                f"User not found for subscription update: {user_id}"
-            )
+            self.logger.warning(f"User not found for subscription update: {user_id}")
             return None
 
         except Exception as e:
@@ -134,17 +130,11 @@ class UsersRepository(BaseRepository):
 
             # Supabase returns (data, count) tuple, where data[1] contains the actual records
             if data and len(data[1]) > 0:
-                self.logger.info(
-                    f"Fetched user '{str(user_id)[:8]}'."
-                )
+                self.logger.info(f"Fetched user '{str(user_id)[:8]}'.")
                 return data[1][0]  # Return the first (and only) record
 
-            self.logger.warning(
-                f"User not found: {user_id}"
-            )
+            self.logger.warning(f"User not found: {user_id}")
             return None
 
         except Exception as e:
-            return self._handle_supabase_error(
-                e, f"get_user_by_id (user_id={user_id})"
-            ) 
+            return self._handle_supabase_error(e, f"get_user_by_id (user_id={user_id})")
