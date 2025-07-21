@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import SidebarLink from '../SidebarLink';
 import { useSessionContext } from '@/context/SessionContext';
 import apiClient from '@/api';
+import { Star } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { session, signOut } = useSessionContext();
+  const { session, signOut, subscriptionStatus } = useSessionContext();
   const router = useRouter();
 
   const handleAuthAction = () => {
@@ -85,6 +86,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <SidebarLink onClick={handleSettingsClick}>
             {/* CogIcon */} Settings
           </SidebarLink>
+          {subscriptionStatus !== 'active' ? (
+            <SidebarLink href="/subscription" onClick={onClose}>
+              <Star className="w-5 h-5 mr-2" />
+              Upgrade to Pro
+            </SidebarLink>
+          ) : (
+            <div className="flex items-center px-4 py-2 text-green-600">
+              <Star className="w-5 h-5 mr-2" />
+              <span className="font-medium">Pro Member</span>
+            </div>
+          )}
         </nav>
         {/* {Display the logged in email} */}
         <div>
