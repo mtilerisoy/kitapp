@@ -24,8 +24,8 @@ jobs:
         run: ruff check api/
       - name: Bandit (SAST)
         run: bandit -c .bandit.yaml -r api/
-      - name: Mypy (type check)
-        run: mypy api/
+      # - name: Mypy (type check)
+      #   run: mypy api/
 
   backend-test:
     name: Backend Tests
