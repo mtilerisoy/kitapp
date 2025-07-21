@@ -105,7 +105,7 @@ We use custom `ENUM` types to ensure data consistency for specific fields.
     username TEXT UNIQUE,
     full_name TEXT,
     avatar_url TEXT,
-    CONSTRAINT username_length CHECK (char_length(username) >= 3)
+    CONSTRAINT users_username_check CHECK (char_length(username) >= 3)
   );
 
   ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -149,6 +149,7 @@ We use custom `ENUM` types to ensure data consistency for specific fields.
   | `description`     | `TEXT`        |                                                | A synopsis or description of the book.          |
   | `published_date`  | `DATE`        |                                                | The original publication date.                  |
   | `created_at`      | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT NOW()`                | Timestamp of when the book was added to the DB. |
+  | `epub_storage_path` | `TEXT`      |                                                | Path to the EPUB file in storage.               |
 * **SQL Definition:**
   ```sql
   CREATE TABLE public.books (
@@ -159,7 +160,8 @@ We use custom `ENUM` types to ensure data consistency for specific fields.
     cover_image_url TEXT,
     description TEXT,
     published_date DATE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    epub_storage_path TEXT
   );
 
   ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
@@ -237,6 +239,30 @@ We use custom `ENUM` types to ensure data consistency for specific fields.
 
   ALTER TABLE public.user_category_preferences ENABLE ROW LEVEL SECURITY;
   CREATE POLICY "Users can manage their own preference data" ON public.user_category_preferences FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  ```
+
+### `public.profiles`
+
+* **Description:** Stores subscription and profile information for each user, linked to Supabase's `auth.users` table.
+* **Columns:**
+  | Column                | Type            | Constraints                                    | Description                                      |
+  | :-------------------- | :-------------- | :--------------------------------------------- | :----------------------------------------------- |
+  | `id`                  | `UUID`          | `PRIMARY KEY`, `REFERENCES auth.users(id)`     | The user's unique identifier.                    |
+  | `subscription_updated_at` | `TIMESTAMPTZ` |                                                | Timestamp of last subscription update.           |
+  | `full_name`           | `TEXT`          |                                                | The user's full name.                            |
+  | `subscription_status` | `TEXT`          |                                                | The user's subscription status.                  |
+  | `stripe_customer_id`  | `TEXT`          | `UNIQUE`                                       | Stripe customer ID.                              |
+  | `stripe_subscription_id` | `TEXT`        |                                                | Stripe subscription ID.                          |
+* **SQL Definition:**
+  ```sql
+  CREATE TABLE public.profiles (
+    id UUID PRIMARY KEY NOT NULL REFERENCES auth.users(id),
+    subscription_updated_at TIMESTAMPTZ,
+    full_name TEXT,
+    subscription_status TEXT,
+    stripe_customer_id TEXT UNIQUE,
+    stripe_subscription_id TEXT
+  );
   ```
 
 ---
