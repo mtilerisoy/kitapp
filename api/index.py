@@ -5,6 +5,7 @@ import traceback
 
 from api.utils.authentication import auth_context_processor
 from api.routes.home_routes import register_home_routes
+from api.routes.stripe_routes import register_stripe_routes
 
 
 app = Flask(__name__)
@@ -36,6 +37,7 @@ def handle_global_exception(e):
 
 
 register_home_routes(app)
+register_stripe_routes(app)
 
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
