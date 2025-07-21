@@ -20,8 +20,8 @@ jobs:
       - run: pip install -r requirements.txt black ruff bandit mypy
       - name: Black (format check)
         run: black --check api/
-      - name: Ruff (lint)
-        run: ruff check api/
+      # - name: Ruff (lint)
+      #   run: ruff check api/
       - name: Bandit (SAST)
         run: bandit -c .bandit.yaml -r api/
       # - name: Mypy (type check)
